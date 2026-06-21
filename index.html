@@ -1,3 +1,33 @@
+// Service worker mínimo — solo habilita la instalación como app.
+// No cachea datos en vivo (jugadores/asistencia) para que siempre estén actualizados.
+const CACHE = 'af-entrenador-v1';
+const SHELL = ['/'];
+
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches.open(CACHE).then((cache) => cache.addAll(SHELL))
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (e) => {
+  // Solo intercepta navegación al shell; todo lo demás (datos, fuentes, etc.) va directo a la red.
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request).catch(() => caches.match('/'))
+    );
+  }
+});
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -9,7 +39,7 @@
 <meta name="theme-color" content="#ff2e93">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="AF Fichas">
+<meta name="apple-mobile-web-app-title" content="AF Entrenador">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1685,6 +1715,38 @@ function renderPlan(keyVal){
 
 load();
 loadAsistencia();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  });
+}
 </script>
 </body>
 </html>
+
+{
+  "name": "Acción Fútbol · Portal del Entrenador",
+  "short_name": "AF Entrenador",
+  "description": "Busca jugadores, revisa su ficha y registra asistencia a los entrenamientos.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0c0c0e",
+  "theme_color": "#ff2e93",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
