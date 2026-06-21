@@ -371,6 +371,24 @@ footer strong{color:var(--muted)}
   background-repeat:no-repeat;background-position:right 14px center;
 }
 .plan-sel select:focus{border-color:var(--pink);outline:0}
+
+/* ── selector de fecha (asistencia) ── */
+.fecha-sel{max-width:640px;margin:0 0 18px}
+.fecha-sel label{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;display:block}
+.fecha-row{display:flex;align-items:center;gap:10px}
+.fecha-row input[type="date"]{
+  flex:1;background:var(--panel);border:1.5px solid var(--line);border-radius:12px;
+  color:var(--ink);font-family:'Oswald',sans-serif;font-size:15px;letter-spacing:.04em;
+  padding:13px 16px;cursor:pointer;color-scheme:dark;
+}
+.fecha-row input[type="date"]:focus{border-color:var(--pink);outline:0}
+.chip-fecha{
+  flex-shrink:0;background:var(--panel);border:1.5px solid var(--line);color:var(--muted);cursor:pointer;
+  font-family:'Oswald',sans-serif;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+  padding:13px 16px;border-radius:12px;font-size:13px;transition:border-color .15s,color .15s,background .15s;
+}
+.chip-fecha:hover{border-color:var(--pink-soft);color:var(--ink)}
+.chip-fecha.active{background:var(--pink-dim);border-color:var(--pink);color:var(--pink-soft)}
 .plan-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;max-width:700px;margin:0 auto}
 .plan-header{background:linear-gradient(135deg,#18181e,#111114);padding:22px 26px;border-bottom:3px solid var(--pink)}
 .plan-tipo-badge{
@@ -698,9 +716,18 @@ footer strong{color:var(--muted)}
       <div class="eyebrow">Portal del entrenador</div>
       <h1>Registrar<br><em>asistencia</em></h1>
       <p class="subtitle">
-        Selecciona la sede y categoría para ver la lista de jugadores activos
-        y marcar quién asistió hoy.
+        Elige la fecha, luego la sede y categoría, para ver la lista de jugadores
+        activos y marcar quién asistió.
       </p>
+
+      <div class="fecha-sel">
+        <label>Fecha del entrenamiento</label>
+        <div class="fecha-row">
+          <button type="button" class="chip-fecha" id="fecha-ayer">← Ayer</button>
+          <input type="date" id="asis-fecha">
+          <button type="button" class="chip-fecha active" id="fecha-hoy">Hoy</button>
+        </div>
+      </div>
 
       <div class="plan-sel" style="margin:0;max-width:640px">
         <div>
@@ -821,7 +848,7 @@ const DIAS_ES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sá
 const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const MESES_NOMBRE = {ENERO:0,FEBRERO:1,MARZO:2,ABRIL:3,MAYO:4,JUNIO:5,JULIO:6,AGOSTO:7,SEPTIEMBRE:8,OCTUBRE:9,NOVIEMBRE:10,DICIEMBRE:11};
 
-const C = {rut:0,nombre:1,estado:2,nac:6,edad:8,sede:9,tipo:10,cat:11,pos:20,pie:21,torneo:45,part:46,min:47,
+const C = {rut:0,nombre:1,estado:2,nac:6,edad:8,sede:9,tipo:10,cat:11,nivel:12,pos:20,pie:21,torneo:45,part:46,min:47,
            salto:53,saltoEst:54,vel30:55,velEst:56,ift:57,iftEst:58,altura:59,peso:60,imc:61,gc:62,mm:63,foto:72,
            poleron:40,unifNegro:41,unifRosado:42};
 const ESTADOS_ACTIVOS = new Set(['ACTIVO','ACTIVOS','NEW','FULL']);
@@ -922,7 +949,7 @@ async function load(){
       const months={};
       for(let m=0;m<12;m++) months[m]=num(r[MES_BASE+m]);
       out.push({rut,nombre,estado:clean(r[C.estado]),nac:fdate(r[C.nac]),edad:num(r[C.edad]),
-        sede:clean(r[C.sede]),cat:clean(r[C.cat]),pos:clean(r[C.pos]),pie:clean(r[C.pie]),
+        sede:clean(r[C.sede]),cat:clean(r[C.cat]),nivel:clean(r[C.nivel]),pos:clean(r[C.pos]),pie:clean(r[C.pie]),
         torneo:clean(r[C.torneo]),foto:clean(r[C.foto]),
         part:num(r[C.part]),min:num(r[C.min]),
         salto:num(r[C.salto]),saltoEst:clean(r[C.saltoEst]),
@@ -1148,6 +1175,12 @@ document.addEventListener('click',e=>{
 
 /* ── selector sede/categoría (solo jugadores activos) ── */
 function activePlayers(){ return PLAYERS.filter(p=>isActiveEstado(p.estado)); }
+function groupKeyFor(p){
+  const sede=(p.sede||'').toUpperCase();
+  if(sede==='LA FLORIDA') return '__TODAS__';
+  if(sede==='LAS CONDES') return [p.cat,p.nivel].filter(Boolean).join(' ').trim() || 'SIN CATEGORÍA';
+  return p.cat||'SIN CATEGORÍA';
+}
 function buildRosterSelect(){
   const sel=$('asis-sedecat');
   const active=activePlayers();
@@ -1159,8 +1192,7 @@ function buildRosterSelect(){
   const bySede={};
   active.forEach(p=>{
     const sede=p.sede||'SIN SEDE';
-    const esFlorida = sede.toUpperCase()==='LA FLORIDA';
-    const cat = esFlorida ? '__TODAS__' : (p.cat||'SIN CATEGORÍA');
+    const cat=groupKeyFor(p);
     bySede[sede]=bySede[sede]||{};
     bySede[sede][cat]=(bySede[sede][cat]||0)+1;
   });
@@ -1193,7 +1225,7 @@ function renderRoster(sedeCatKey){
   }
   const [sede,cat]=sedeCatKey.split('|');
   ROSTER=activePlayers()
-    .filter(p=>p.sede===sede && (cat==='__TODAS__' ? true : p.cat===cat))
+    .filter(p=>p.sede===sede && groupKeyFor(p)===cat)
     .sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
   $('emptya').classList.remove('show');
   $('roster-summary').style.display='flex';
@@ -1232,33 +1264,61 @@ function updateRosterItemUI(p){
   if(marca && marca.presente===true){ item.classList.add('is-si'); si.classList.add('active'); }
   else if(marca && marca.presente===false){ item.classList.add('is-no'); no.classList.add('active'); }
 }
+function formatDateEs(str){
+  const [y,m,d]=str.split('-').map(Number);
+  const dt=new Date(y,m-1,d);
+  return dt.toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});
+}
 function updateRosterCounts(){
   const total=ROSTER.length;
   const marcados=ROSTER.filter(p=>ASIS_HOY[p.key]).length;
   const presentes=ROSTER.filter(p=>ASIS_HOY[p.key]&&ASIS_HOY[p.key].presente===true).length;
-  $('roster-count').innerHTML='<b>'+presentes+'</b> presentes · <b>'+marcados+'</b>/'+total+' marcados';
+  $('roster-count').innerHTML=formatDateEs(fechaSeleccionada())+' · <b>'+presentes+'</b> presentes · <b>'+marcados+'</b>/'+total+' marcados';
   ROSTER.forEach(updateRosterItemUI);
 }
 
 /* ── asistencia (lectura/escritura) ── */
-let ASIS_HOY = {}; // rut(norm) -> {hora, nombre, presente:true/false}
+let ASIS_HOY = {}; // rut(norm) -> {hora, nombre, presente:true/false} — para la fecha seleccionada
 function todayStr(){
   const d=new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
+function yesterdayStr(){
+  const d=new Date(); d.setDate(d.getDate()-1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function fechaSeleccionada(){
+  return $('asis-fecha').value || todayStr();
+}
+function setFecha(str){
+  $('asis-fecha').value = str;
+  $('fecha-hoy').classList.toggle('active', str===todayStr());
+  $('fecha-ayer').classList.toggle('active', str===yesterdayStr());
+  loadAsistencia();
+}
+$('asis-fecha').value = todayStr();
+$('asis-fecha').addEventListener('change', ()=>{
+  const v=$('asis-fecha').value || todayStr();
+  $('fecha-hoy').classList.toggle('active', v===todayStr());
+  $('fecha-ayer').classList.toggle('active', v===yesterdayStr());
+  loadAsistencia();
+});
+$('fecha-hoy').onclick = ()=>setFecha(todayStr());
+$('fecha-ayer').onclick = ()=>setFecha(yesterdayStr());
+
 async function loadAsistencia(){
   if(!API_ASIS || API_ASIS==='__API_ASIS__') return;
   try{
     const res = await fetch(API_ASIS, {cache:'no-store'});
     const rows = await res.json();
     if(!Array.isArray(rows)) return;
-    const hoy = todayStr();
+    const fechaSel = fechaSeleccionada();
     const map = {};
     for(let i=1;i<rows.length;i++){
       const r=rows[i]; if(!r||!r.length) continue;
       const fecha=String(r[0]||''), hora=String(r[1]||''), rut=String(r[2]||''), nombre=String(r[3]||'');
       const presenteStr=String(r[6]||'').trim().toUpperCase();
-      if(fecha===hoy && rut) map[norm(rut)]={hora,nombre,presente: presenteStr==='SI'};
+      if(fecha===fechaSel && rut) map[norm(rut)]={hora,nombre,presente: presenteStr==='SI'};
     }
     ASIS_HOY = map;
     if(ROSTER.length) updateRosterCounts();
@@ -1273,7 +1333,7 @@ async function markAttendance(p, presente){
   try{
     await fetch(API_ASIS, {
       method:'POST',
-      body: JSON.stringify({rut:p.rut, nombre:p.nombre, sede:p.sede, categoria:p.cat, presente: presente?'SI':'NO'})
+      body: JSON.stringify({rut:p.rut, nombre:p.nombre, sede:p.sede, categoria:p.cat, presente: presente?'SI':'NO', fecha:fechaSeleccionada()})
     });
   }catch(e){
     ASIS_HOY[p.key]=prevMarca;
