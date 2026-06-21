@@ -272,6 +272,13 @@ footer strong{color:var(--muted)}
 .est-badge.desarrollo{background:rgba(255,176,32,.12);color:#ffb020;border:1px solid rgba(255,176,32,.3)}
 .est-badge.aceptable{background:rgba(39,194,129,.12);color:#27c281;border:1px solid rgba(39,194,129,.3)}
 .est-badge.destacado{background:rgba(255,46,147,.12);color:var(--pink-soft);border:1px solid rgba(255,46,147,.3)}
+/* ── indumentaria OK/NO ── */
+.ind-badge{
+  display:inline-block;font-size:11px;font-family:"Oswald",sans-serif;
+  letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:999px;font-weight:700;
+}
+.ind-badge.ok{background:rgba(39,194,129,.14);color:#27c281;border:1px solid rgba(39,194,129,.35)}
+.ind-badge.no{background:rgba(255,80,80,.14);color:#ff5050;border:1px solid rgba(255,80,80,.35)}
 /* ── 3 meses asistencia ── */
 .asis-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 /* ── gráfica ── */
@@ -640,6 +647,16 @@ footer strong{color:var(--muted)}
         <div class="sec-title">Evolución de asistencia</div>
         <div class="chart-wrap"><canvas id="chart-asis"></canvas></div>
       </div>
+
+      <div class="sec">
+        <div class="sec-title">Indumentaria</div>
+        <div class="fgrid">
+          <div class="field"><div class="lbl">Estado Polerones</div><div id="p-poleron"></div></div>
+          <div class="field"><div class="lbl">Uniforme Negro</div><div id="p-unifNegro"></div></div>
+          <div class="field"><div class="lbl">Uniforme Rosado</div><div id="p-unifRosado"></div></div>
+        </div>
+      </div>
+
       <div class="ficha-actions">
         <button class="btn btn-primary" id="pdf">⤓ Descargar PDF</button>
         <button class="btn btn-ghost" id="clear">← Nueva búsqueda</button>
@@ -805,7 +822,8 @@ const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agos
 const MESES_NOMBRE = {ENERO:0,FEBRERO:1,MARZO:2,ABRIL:3,MAYO:4,JUNIO:5,JULIO:6,AGOSTO:7,SEPTIEMBRE:8,OCTUBRE:9,NOVIEMBRE:10,DICIEMBRE:11};
 
 const C = {rut:0,nombre:1,estado:2,nac:6,edad:8,sede:9,tipo:10,cat:11,pos:20,pie:21,torneo:45,part:46,min:47,
-           salto:53,saltoEst:54,vel30:55,velEst:56,ift:57,iftEst:58,altura:59,peso:60,imc:61,gc:62,mm:63,foto:72};
+           salto:53,saltoEst:54,vel30:55,velEst:56,ift:57,iftEst:58,altura:59,peso:60,imc:61,gc:62,mm:63,foto:72,
+           poleron:40,unifNegro:41,unifRosado:42};
 const ESTADOS_ACTIVOS = new Set(['ACTIVO','ACTIVOS','NEW','FULL']);
 function isActiveEstado(estado){ return ESTADOS_ACTIVOS.has((estado||'').toString().trim().toUpperCase()); }
 const MES_BASE = 28;
@@ -911,7 +929,9 @@ async function load(){
         vel30:num(r[C.vel30]),velEst:clean(r[C.velEst]),
         ift:num(r[C.ift]),iftEst:clean(r[C.iftEst]),
         altura:num(r[C.altura]),peso:num(r[C.peso]),imc:num(r[C.imc]),
-        gc:num(r[C.gc]),mm:num(r[C.mm]),months,key:norm(rut)});
+        gc:num(r[C.gc]),mm:num(r[C.mm]),
+        poleron:clean(r[C.poleron]),unifNegro:clean(r[C.unifNegro]),unifRosado:clean(r[C.unifRosado]),
+        months,key:norm(rut)});
     }
     const best={};
     for(const p of out){
@@ -957,6 +977,14 @@ function torneoBadge(t){
   const isAmistoso = t.toUpperCase()==='AMISTOSOS'||t.toUpperCase()==='AMISTOSO';
   if(isAmistoso) return '<span class="torneo-badge amistoso">⚽ Amistosos</span>';
   return '<span class="torneo-badge torneo">🏆 Torneo: '+t+'</span>';
+}
+
+function indBadge(v){
+  if(!v) return '<span class="val empty">—</span>';
+  const u=v.toUpperCase().trim();
+  if(u==='OK') return '<span class="ind-badge ok">OK</span>';
+  if(u==='NO') return '<span class="ind-badge no">NO</span>';
+  return '<span class="val">'+v+'</span>';
 }
 
 function renderChart(p){
@@ -1067,6 +1095,9 @@ function show(p){
   setV('p-ift',p.ift,p.ift?' km/h':''); $('p-iftEst').innerHTML=estBadge(p.iftEst);
   setV('p-altura',p.altura,p.altura?' m':''); setV('p-peso',p.peso,p.peso?' kg':'');
   setV('p-imc',p.imc); setV('p-gc',p.gc,p.gc?' %':''); setV('p-mm',p.mm,p.mm?' %':'');
+  $('p-poleron').innerHTML=indBadge(p.poleron);
+  $('p-unifNegro').innerHTML=indBadge(p.unifNegro);
+  $('p-unifRosado').innerHTML=indBadge(p.unifRosado);
   $('empty').classList.remove('show');
   $('ficha').classList.add('show');
   $('ficha').scrollIntoView({behavior:'smooth',block:'start'});
@@ -1127,7 +1158,9 @@ function buildRosterSelect(){
   }
   const bySede={};
   active.forEach(p=>{
-    const sede=p.sede||'SIN SEDE', cat=p.cat||'SIN CATEGORÍA';
+    const sede=p.sede||'SIN SEDE';
+    const esFlorida = sede.toUpperCase()==='LA FLORIDA';
+    const cat = esFlorida ? '__TODAS__' : (p.cat||'SIN CATEGORÍA');
     bySede[sede]=bySede[sede]||{};
     bySede[sede][cat]=(bySede[sede][cat]||0)+1;
   });
@@ -1136,7 +1169,8 @@ function buildRosterSelect(){
     html+='<optgroup label="'+sede+'">';
     Object.keys(bySede[sede]).sort((a,b)=>a.localeCompare(b,'es')).forEach(cat=>{
       const n=bySede[sede][cat];
-      html+='<option value="'+sede+'|'+cat+'">'+sede+' · '+cat+' ('+n+')</option>';
+      const label = cat==='__TODAS__' ? (sede+' ('+n+')') : (sede+' · '+cat+' ('+n+')');
+      html+='<option value="'+sede+'|'+cat+'">'+label+'</option>';
     });
     html+='</optgroup>';
   });
@@ -1159,7 +1193,7 @@ function renderRoster(sedeCatKey){
   }
   const [sede,cat]=sedeCatKey.split('|');
   ROSTER=activePlayers()
-    .filter(p=>p.sede===sede && p.cat===cat)
+    .filter(p=>p.sede===sede && (cat==='__TODAS__' ? true : p.cat===cat))
     .sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
   $('emptya').classList.remove('show');
   $('roster-summary').style.display='flex';
