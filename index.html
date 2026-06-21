@@ -944,11 +944,13 @@ async function load(){
       const r=rows[i]; if(!r?.length) continue;
       const rut=clean(r[C.rut]),nombre=clean(r[C.nombre]);
       if(!rut||!nombre||rut.toUpperCase()==='LLENAR INFORMACIÓN') continue;
+      const estado=clean(r[C.estado]);
+      if(estado.toUpperCase()==='DESACTIVADO') continue;
       const tipo=clean(r[C.tipo]);
       if(tipo.toUpperCase()!=='PRO') continue;
       const months={};
       for(let m=0;m<12;m++) months[m]=num(r[MES_BASE+m]);
-      out.push({rut,nombre,estado:clean(r[C.estado]),nac:fdate(r[C.nac]),edad:num(r[C.edad]),
+      out.push({rut,nombre,estado,nac:fdate(r[C.nac]),edad:num(r[C.edad]),
         sede:clean(r[C.sede]),cat:clean(r[C.cat]),nivel:clean(r[C.nivel]),pos:clean(r[C.pos]),pie:clean(r[C.pie]),
         torneo:clean(r[C.torneo]),foto:clean(r[C.foto]),
         part:num(r[C.part]),min:num(r[C.min]),
