@@ -1096,8 +1096,7 @@ function searchPlayers(s){
     const exact=findRut(v);
     if(exact) return [exact];
   }
-  return findByName(v);
-}x  
+  return findByName(v); 
 
 function getInitials(nombre){
   const parts = (nombre||'').trim().split(/\s+/);
