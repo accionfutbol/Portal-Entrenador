@@ -778,7 +778,15 @@ footer strong{color:var(--muted)}
     <div class="hero-content">
       <div class="eyebrow">Informe semanal · La Florida</div>
       <h1>Alertas de<br><em>Inasistencia</em></h1>
-      <p class="subtitle">Jugadores con <strong>2 o más faltas</strong> en la semana actual.</p>
+      <p class="subtitle">Jugadores con <strong>2 o más faltas</strong> en la semana seleccionada.</p>
+      <div class="fecha-sel">
+        <label>Selecciona cualquier día de la semana a consultar</label>
+        <div class="fecha-row">
+          <button type="button" class="chip-fecha" id="alertas-semana-ant">← Semana ant.</button>
+          <input type="date" id="alertas-fecha">
+          <button type="button" class="chip-fecha active" id="alertas-hoy">Esta semana</button>
+        </div>
+      </div>
     </div>
   </div>
   <main>
@@ -1718,6 +1726,10 @@ function renderPlan(keyVal){
 
 
 /* ══ ALERTAS DE INASISTENCIA ══ */
+function todayStrAl(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
 function showAlertas(){
   $('view-home').style.display = 'none';
   $('view-ficha').style.display = 'none';
@@ -1725,6 +1737,7 @@ function showAlertas(){
   $('view-plan').style.display = 'none';
   $('view-alertas').style.display = 'block';
   $('logoImgAl').src = LOGO;
+  if(!$('alertas-fecha').value) $('alertas-fecha').value = todayStrAl();
   window.scrollTo({top:0});
   loadAlertas();
 }
@@ -1735,11 +1748,32 @@ function hideAlertas(){
 $('btn-alertas').onclick = showAlertas;
 $('btn-alertas-inicio').onclick = hideAlertas;
 
+$('alertas-fecha').addEventListener('change', function(){
+  $('alertas-hoy').classList.toggle('active', $('alertas-fecha').value === todayStrAl());
+  loadAlertas();
+});
+$('alertas-hoy').onclick = function(){
+  $('alertas-fecha').value = todayStrAl();
+  $('alertas-hoy').classList.add('active');
+  loadAlertas();
+};
+$('alertas-semana-ant').onclick = function(){
+  const actual = $('alertas-fecha').value || todayStrAl();
+  const partes = actual.split('-').map(Number);
+  const d = new Date(partes[0], partes[1]-1, partes[2]);
+  d.setDate(d.getDate() - 7);
+  const nueva = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  $('alertas-fecha').value = nueva;
+  $('alertas-hoy').classList.toggle('active', nueva === todayStrAl());
+  loadAlertas();
+};
+
 async function loadAlertas(){
   const el = $('alertas-result');
   el.innerHTML = '<div class="loader show"><div class="spin"></div><span>Cargando informe…</span></div>';
   try{
-    const res = await fetch(API_ALERTAS_LF, {cache:'no-store'});
+    const fechaConsulta = $('alertas-fecha').value || todayStrAl();
+    const res = await fetch(API_ALERTAS_LF+'?fecha='+fechaConsulta, {cache:'no-store'});
     const data = await res.json();
 
     if(data.error){
