@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acción Fútbol · Registrar Asistencia</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0c0c0e;--panel:#161619;--panel2:#1f1f24;--line:#2a2a30;--pink:#ff2e93;--pink-deep:#c70f6e;--ink:#f5f5f7;--muted:#9a9aa3;--muted2:#5c5c66;--ok:#27c281;--warn:#ffb020;--blue:#64c8ff;--red:#ff4d5e;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
+.wrap{max-width:640px;margin:0 auto;padding:24px 16px 100px}
+h1{font-family:'Oswald';font-weight:700;text-transform:uppercase;font-size:26px;letter-spacing:.02em;margin-bottom:4px}
+h1 em{color:var(--pink);font-style:normal}
+.sub{color:var(--muted);font-size:13px;margin-bottom:20px}
+label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px;font-weight:600}
+input,select{width:100%;background:var(--panel);border:1.5px solid var(--line);border-radius:12px;color:var(--ink);font-size:15px;font-family:'Inter';padding:13px 14px;outline:none}
+input:focus,select:focus{border-color:var(--pink)}
+.field{margin-bottom:14px}
+.btn{width:100%;padding:14px;border:none;border-radius:12px;background:var(--pink);color:#fff;font-family:'Oswald';font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:filter .15s}
+.btn:hover{filter:brightness(1.1)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px}
+.hidden{display:none}
+.logout{position:fixed;top:14px;right:14px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:11px;color:var(--muted);cursor:pointer;z-index:50}
+.err{background:rgba(255,77,94,.1);border:1px solid rgba(255,77,94,.3);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--red);margin-top:10px;display:none}
+.player{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.player .pname{flex:1;min-width:0}
+.player .pn{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.player .prut{font-size:11px;color:var(--muted2)}
+.marks{display:flex;gap:5px;flex-shrink:0}
+.mk{width:38px;height:38px;border-radius:9px;border:1.5px solid var(--line);background:var(--panel2);color:var(--muted);font-family:'Oswald';font-weight:700;font-size:14px;cursor:pointer;transition:.12s}
+.mk.ok.on{background:var(--ok);border-color:var(--ok);color:#04231a}
+.mk.f.on{background:var(--red);border-color:var(--red);color:#2a0509}
+.mk.j.on{background:var(--warn);border-color:var(--warn);color:#2a1f04}
+.mk.l.on{background:var(--blue);border-color:var(--blue);color:#04202a}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.sc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 6px;text-align:center}
+.sc .v{font-family:'Oswald';font-size:22px;font-weight:700}
+.sc .l{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.savebar{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(transparent,var(--bg) 30%);padding:16px;z-index:40}
+.savebar .inner{max-width:640px;margin:0 auto}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 20px;font-size:14px;z-index:60;opacity:0;pointer-events:none;transition:.25s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.loader{text-align:center;color:var(--muted);padding:30px;font-size:14px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login" class="wrap">
+  <div style="height:40px"></div>
+  <h1>Registrar <em>Asistencia</em></h1>
+  <p class="sub">Acción Fútbol · Portal del Entrenador</p>
+  <div class="card">
+    <div class="field">
+      <label>Correo</label>
+      <input type="email" id="email" placeholder="asistenciacontacto...@gmail.com" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" id="pass" placeholder="********" autocomplete="current-password">
+    </div>
+    <button class="btn" id="btn-login">Ingresar</button>
+    <div class="err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="wrap hidden">
+  <div class="logout" id="btn-logout">Salir</div>
+  <h1>Registrar <em>Asistencia</em></h1>
+  <p class="sub">Elige sede, categoría y fecha, luego marca la lista.</p>
+
+  <div class="card">
+    <div class="field">
+      <label>Sede y categoría</label>
+      <select id="sedecat"><option value="">Cargando...</option></select>
+    </div>
+    <div class="field">
+      <label>Fecha del entrenamiento</label>
+      <input type="date" id="fecha">
+    </div>
+    <button class="btn" id="btn-cargar">Cargar lista</button>
+    <div class="err" id="app-err"></div>
+  </div>
+
+  <div id="roster-wrap" class="hidden">
+    <div class="summary" id="summary"></div>
+    <div id="roster"></div>
+  </div>
+</div>
+
+<div class="savebar hidden" id="savebar"><div class="inner">
+  <button class="btn" id="btn-guardar">Guardar asistencia</button>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_ASIS = 'https://script.google.com/macros/s/AKfycbwa53UNt6Q1MmxCt9g8EGB63Hu_r-UqzUQ1Uh51YWfe5ZuZCFTSVenPFLUGOVnghbIt/exec';
+const firebaseConfig = {
+  apiKey: "AIzaSyCUAjo8Y2UboI7yf1Hx0t-RGB5MnFlhqRw",
+  authDomain: "accion---futbol-f0b72.firebaseapp.com",
+  projectId: "accion---futbol-f0b72",
+  messagingSenderId: "510456063312",
+  appId: "1:510456063312:web:774c9ef2e7747064e43855"
+};
+firebase.initializeApp(firebaseConfig);
+const fbAuth = firebase.auth();
+
+const $ = id => document.getElementById(id);
+let ROSTER = [];
+const MARCAS = ['OK','F','J','L'];
+
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+function showErr(id,msg){ const e=$(id); e.textContent=msg; e.style.display='block'; }
+function hideErr(id){ $(id).style.display='none'; }
+
+async function token(){ const u=fbAuth.currentUser; if(!u) throw new Error('Sesion no iniciada'); return await u.getIdToken(); }
+
+$('btn-login').onclick = async ()=>{
+  hideErr('login-err');
+  const email=$('email').value.trim(), pass=$('pass').value;
+  if(!email||!pass){ showErr('login-err','Ingresa correo y contrasena.'); return; }
+  $('btn-login').disabled=true;
+  try{ await fbAuth.signInWithEmailAndPassword(email,pass); }
+  catch(e){ showErr('login-err','Correo o contrasena incorrectos.'); }
+  $('btn-login').disabled=false;
+};
+$('btn-logout').onclick = ()=>fbAuth.signOut();
+
+fbAuth.onAuthStateChanged(async user=>{
+  if(user){
+    $('login').classList.add('hidden');
+    $('app').classList.remove('hidden');
+    $('fecha').value = todayStr();
+    await cargarConfig();
+  } else {
+    $('app').classList.add('hidden');
+    $('savebar').classList.add('hidden');
+    $('login').classList.remove('hidden');
+  }
+});
+
+async function cargarConfig(){
+  try{
+    const t=await token();
+    const res=await fetch(API_ASIS+'?action=config&idToken='+encodeURIComponent(t),{cache:'no-store'});
+    const data=await res.json();
+    if(data.error){ showErr('app-err',data.error); return; }
+    const sel=$('sedecat');
+    const bySede={};
+    (data.sedes||[]).forEach(x=>{ (bySede[x.sede]=bySede[x.sede]||[]).push(x.categoria); });
+    let html='<option value="">Selecciona...</option>';
+    Object.keys(bySede).forEach(sede=>{
+      html+='<optgroup label="'+sede+'">';
+      bySede[sede].forEach(cat=>{ html+='<option value="'+sede+'||'+cat+'">'+sede+' - '+cat+'</option>'; });
+      html+='</optgroup>';
+    });
+    sel.innerHTML=html;
+  }catch(e){ showErr('app-err','No se pudo cargar la configuracion.'); }
+}
+
+$('btn-cargar').onclick = async ()=>{
+  hideErr('app-err');
+  const val=$('sedecat').value, fecha=$('fecha').value||todayStr();
+  if(!val){ showErr('app-err','Elige sede y categoria.'); return; }
+  const parts=val.split('||'), sede=parts[0], cat=parts[1];
+  $('btn-cargar').disabled=true; $('roster').innerHTML='<div class="loader">Cargando lista...</div>'; $('roster-wrap').classList.remove('hidden');
+  try{
+    const t=await token();
+    const q='?action=roster&sede='+encodeURIComponent(sede)+'&cat='+encodeURIComponent(cat)+'&fecha='+encodeURIComponent(fecha)+'&idToken='+encodeURIComponent(t);
+    const res=await fetch(API_ASIS+q,{cache:'no-store'});
+    const data=await res.json();
+    if(data.error){ showErr('app-err',data.error); $('roster').innerHTML=''; $('savebar').classList.add('hidden'); $('btn-cargar').disabled=false; return; }
+    ROSTER=data.jugadores||[];
+    renderRoster();
+    $('savebar').classList.remove('hidden');
+  }catch(e){ showErr('app-err','No se pudo cargar la lista.'); $('roster').innerHTML=''; }
+  $('btn-cargar').disabled=false;
+};
+
+function renderRoster(){
+  let html='';
+  ROSTER.forEach((p,i)=>{
+    const marca=(p.marca||'').toUpperCase();
+    html+='<div class="player"><div class="pname"><div class="pn">'+esc(p.nombre)+'</div>'+(p.rut?'<div class="prut">'+esc(p.rut)+'</div>':'')+'</div><div class="marks">';
+    MARCAS.forEach(m=>{ html+='<button class="mk '+m.toLowerCase()+(marca===m?' on':'')+'" data-i="'+i+'" data-m="'+m+'">'+m+'</button>'; });
+    html+='</div></div>';
+  });
+  $('roster').innerHTML=html;
+  const btns=$('roster').querySelectorAll('.mk');
+  btns.forEach(b=>{
+    b.onclick=()=>{ const i=+b.dataset.i, m=b.dataset.m; ROSTER[i].marca=(ROSTER[i].marca===m?'':m); renderRoster(); };
+  });
+  updateSummary();
+}
+function updateSummary(){
+  const c={OK:0,F:0,J:0,L:0};
+  ROSTER.forEach(p=>{ const m=(p.marca||'').toUpperCase(); if(m in c) c[m]++; });
+  $('summary').innerHTML=
+    '<div class="sc"><div class="v" style="color:var(--ok)">'+c.OK+'</div><div class="l">Asistio</div></div>'+
+    '<div class="sc"><div class="v" style="color:var(--red)">'+c.F+'</div><div class="l">Falto</div></div>'+
+    '<div class="sc"><div class="v" style="color:var(--warn)">'+c.J+'</div><div class="l">Justif.</div></div>'+
+    '<div class="sc"><div class="v" style="color:var(--blue)">'+c.L+'</div><div class="l">Lesion.</div></div>';
+}
+
+$('btn-guardar').onclick = async ()=>{
+  const val=$('sedecat').value, fecha=$('fecha').value||todayStr();
+  if(!val){ toast('Elige sede y categoria'); return; }
+  const parts=val.split('||'), sede=parts[0], cat=parts[1];
+  const marcas=ROSTER.filter(p=>p.marca).map(p=>({row:p.row,marca:p.marca}));
+  if(!marcas.length){ toast('No hay marcas para guardar'); return; }
+  $('btn-guardar').disabled=true; $('btn-guardar').textContent='Guardando...';
+  try{
+    const t=await token();
+    const res=await fetch(API_ASIS,{method:'POST',body:JSON.stringify({action:'save',idToken:t,sede:sede,cat:cat,fecha:fecha,marcas:marcas})});
+    const data=await res.json();
+    if(data.error){ toast('Error: '+data.error); }
+    else{ toast('Guardado ('+data.escritos+' jugadores)'); }
+  }catch(e){ toast('No se pudo guardar. Revisa la conexion.'); }
+  $('btn-guardar').disabled=false; $('btn-guardar').textContent='Guardar asistencia';
+};
+
+function esc(s){ return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+</script>
+</body>
+</html>
