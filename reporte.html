@@ -7,6 +7,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0c0c0e;--panel:#161619;--panel2:#1f1f24;--line:#2a2a30;--pink:#ff2e93;--pink-deep:#c70f6e;--ink:#f5f5f7;--muted:#9a9aa3;--muted2:#5c5c66;--ok:#27c281;--warn:#ffb020;--blue:#64c8ff;--red:#ff4d5e;}
@@ -17,8 +18,9 @@ h1{font-family:'Oswald';font-weight:700;text-transform:uppercase;font-size:26px;
 h1 em{color:var(--pink);font-style:normal}
 .sub{color:var(--muted);font-size:13px;margin-bottom:20px}
 label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px;font-weight:600}
-input{width:100%;background:var(--panel);border:1.5px solid var(--line);border-radius:12px;color:var(--ink);font-size:15px;padding:13px 14px;outline:none}
-input:focus{border-color:var(--pink)}
+input,select{width:100%;background:var(--panel);border:1.5px solid var(--line);border-radius:12px;color:var(--ink);font-size:15px;padding:13px 14px;outline:none}
+input:focus,select:focus{border-color:var(--pink)}
+.field{margin-bottom:14px}
 .btn{width:100%;padding:14px;border:none;border-radius:12px;background:var(--pink);color:#fff;font-family:'Oswald';font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 .btn:hover{filter:brightness(1.1)}
 .btn:disabled{opacity:.5;cursor:not-allowed}
@@ -29,19 +31,22 @@ input:focus{border-color:var(--pink)}
 .backhome{position:fixed;top:14px;left:14px;background:var(--pink);border:none;border-radius:8px;padding:7px 13px;font-size:11px;font-family:'Oswald';font-weight:600;text-transform:uppercase;color:#fff;cursor:pointer;z-index:50;text-decoration:none}
 .logout{position:fixed;top:14px;right:14px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:11px;color:var(--muted);cursor:pointer;z-index:50}
 .err{background:rgba(255,77,94,.1);border:1px solid rgba(255,77,94,.3);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--red);margin-top:10px;display:none}
-.tot{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0}
-.tc{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 6px;text-align:center}
-.tc .v{font-family:'Oswald';font-size:26px;font-weight:700}
-.tc .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
-.catcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px}
-.catcard .ct{font-family:'Oswald';font-weight:600;font-size:15px;text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px}
-.catcard .cnums{display:flex;gap:14px;flex-wrap:wrap;font-size:13px}
-.catcard .cnums b{font-family:'Oswald'}
-.alerta{background:rgba(255,77,94,.08);border:1px solid rgba(255,77,94,.3);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:13px}
-.alerta .at{color:var(--red);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.repcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px}
+.rt{font-family:'Oswald';font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.03em}
+.rmeta{color:var(--muted);font-size:12px;margin-bottom:16px}
+.chart-box{position:relative;height:230px;margin:8px 0 6px}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.lg{display:flex;align-items:center;gap:8px;font-size:13px}
+.lg .dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.lg b{font-family:'Oswald';margin-left:auto}
+.alerta{background:rgba(255,77,94,.08);border:1px solid rgba(255,77,94,.3);border-radius:12px;padding:14px 16px;margin-top:16px}
+.alerta .at{color:var(--red);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.alerta ul{list-style:none;margin:0;padding:0}
+.alerta li{padding:7px 0;border-bottom:1px solid rgba(255,77,94,.15);font-size:14px;display:flex;justify-content:space-between;gap:10px}
+.alerta li:last-child{border-bottom:0}
+.alerta li .fx{color:var(--red);font-family:'Oswald';font-weight:700;flex-shrink:0}
 .loader{text-align:center;color:var(--muted);padding:30px;font-size:14px}
-.pill{display:inline-flex;align-items:center;gap:5px}
-.dot{width:9px;height:9px;border-radius:50%}
+.okmsg{color:var(--ok);text-align:center;padding:16px;font-size:14px}
 </style>
 </head>
 <body>
@@ -52,8 +57,8 @@ input:focus{border-color:var(--pink)}
   <h1>Reporte de <em>Asistencia</em></h1>
   <p class="sub">Acción Fútbol · Portal del Entrenador</p>
   <div class="card">
-    <div style="margin-bottom:14px"><label>Correo</label><input type="email" id="email" autocomplete="username"></div>
-    <div style="margin-bottom:14px"><label>Contraseña</label><input type="password" id="pass" autocomplete="current-password"></div>
+    <div class="field"><label>Correo</label><input type="email" id="email" autocomplete="username"></div>
+    <div class="field"><label>Contraseña</label><input type="password" id="pass" autocomplete="current-password"></div>
     <button class="btn" id="btn-login">Ingresar</button>
     <div class="err" id="login-err"></div>
   </div>
@@ -62,8 +67,12 @@ input:focus{border-color:var(--pink)}
 <div id="app" class="wrap hidden">
   <div class="logout" id="btn-logout">Salir</div>
   <h1>Reporte de <em>Asistencia</em></h1>
-  <p class="sub">Resumen semanal por sede y categoría.</p>
+  <p class="sub">Selecciona sede, categoría y semana.</p>
   <div class="card">
+    <div class="field">
+      <label>Sede y categoría</label>
+      <select id="sedecat"><option value="">Cargando...</option></select>
+    </div>
     <div class="row2">
       <div><label>Desde</label><input type="date" id="desde"></div>
       <div><label>Hasta</label><input type="date" id="hasta"></div>
@@ -89,7 +98,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const fbAuth = firebase.auth();
 const $ = id => document.getElementById(id);
-let REP = null;
+let CAT = null, CHART = null;
 
 function showErr(id,m){ $(id).textContent=m; $(id).style.display='block'; }
 function hideErr(id){ $(id).style.display='none'; }
@@ -109,90 +118,124 @@ $('btn-login').onclick=async()=>{
   if(!email||!pass){ showErr('login-err','Ingresa correo y contrasena.'); return; }
   $('btn-login').disabled=true;
   try{ await fbAuth.signInWithEmailAndPassword(email,pass); }
-  catch(e){ showErr('login-err', e.code==='auth/invalid-credential'||e.code==='auth/wrong-password'?'Correo o contrasena incorrectos.':(e.code||'Error')); }
+  catch(e){ showErr('login-err','Correo o contrasena incorrectos.'); }
   $('btn-login').disabled=false;
 };
 $('btn-logout').onclick=()=>fbAuth.signOut();
 
-fbAuth.onAuthStateChanged(u=>{
+fbAuth.onAuthStateChanged(async u=>{
   if(u){
     $('login').classList.add('hidden'); $('app').classList.remove('hidden');
     const s=semanaPasada(); $('desde').value=s.desde; $('hasta').value=s.hasta;
+    await cargarConfig();
   } else { $('app').classList.add('hidden'); $('login').classList.remove('hidden'); }
 });
 
-$('btn-generar').onclick=async()=>{
-  hideErr('app-err');
-  const desde=$('desde').value, hasta=$('hasta').value;
-  if(!desde||!hasta){ showErr('app-err','Elige el rango de fechas.'); return; }
-  $('result').innerHTML='<div class="loader">Calculando… (puede tardar unos segundos)</div>';
-  $('btn-pdf').classList.add('hidden');
+async function cargarConfig(){
   try{
     const t=await token();
-    const q='?action=reporte&desde='+encodeURIComponent(desde)+'&hasta='+encodeURIComponent(hasta)+'&idToken='+encodeURIComponent(t);
+    const res=await fetch(API_ASIS+'?action=config&idToken='+encodeURIComponent(t),{cache:'no-store'});
+    const data=await res.json();
+    if(data.error){ showErr('app-err',data.error); return; }
+    const bySede={};
+    (data.sedes||[]).forEach(x=>{ (bySede[x.sede]=bySede[x.sede]||[]).push(x.categoria); });
+    let html='<option value="">Selecciona...</option>';
+    Object.keys(bySede).forEach(sede=>{
+      html+='<optgroup label="'+sede+'">';
+      bySede[sede].forEach(cat=>{ html+='<option value="'+sede+'||'+cat+'">'+sede+' - '+cat+'</option>'; });
+      html+='</optgroup>';
+    });
+    $('sedecat').innerHTML=html;
+  }catch(e){ showErr('app-err','No se pudo cargar la configuracion.'); }
+}
+
+$('btn-generar').onclick=async()=>{
+  hideErr('app-err');
+  const val=$('sedecat').value, desde=$('desde').value, hasta=$('hasta').value;
+  if(!val){ showErr('app-err','Elige sede y categoria.'); return; }
+  if(!desde||!hasta){ showErr('app-err','Elige el rango de fechas.'); return; }
+  const parts=val.split('||'), sede=parts[0], cat=parts[1];
+  $('result').innerHTML='<div class="loader">Calculando...</div>'; $('btn-pdf').classList.add('hidden');
+  try{
+    const t=await token();
+    const q='?action=reporte&sede='+encodeURIComponent(sede)+'&cat='+encodeURIComponent(cat)+'&desde='+encodeURIComponent(desde)+'&hasta='+encodeURIComponent(hasta)+'&idToken='+encodeURIComponent(t);
     const res=await fetch(API_ASIS+q,{cache:'no-store'});
     const data=await res.json();
     if(data.error){ showErr('app-err',data.error); $('result').innerHTML=''; return; }
-    REP=data; render(data);
+    const c=(data.categorias||[])[0];
+    if(!c){ $('result').innerHTML='<div class="loader">No hay datos para esa selección.</div>'; return; }
+    CAT={rep:data, c:c, sede:sede, cat:cat};
+    render(c, data);
     $('btn-pdf').classList.remove('hidden');
   }catch(e){ showErr('app-err','No se pudo generar el reporte.'); $('result').innerHTML=''; }
 };
 
-function render(d){
-  const t=d.totales;
-  let h='<div class="tot">'+
-    '<div class="tc"><div class="v" style="color:var(--ok)">'+t.OK+'</div><div class="l">Asistio</div></div>'+
-    '<div class="tc"><div class="v" style="color:var(--red)">'+t.F+'</div><div class="l">Falto</div></div>'+
-    '<div class="tc"><div class="v" style="color:var(--warn)">'+t.J+'</div><div class="l">Justif.</div></div>'+
-    '<div class="tc"><div class="v" style="color:var(--blue)">'+t.L+'</div><div class="l">Lesion.</div></div></div>';
-  (d.categorias||[]).forEach(c=>{
-    h+='<div class="catcard"><div class="ct">'+esc(c.sede)+' · '+esc(c.categoria)+'</div>';
-    if(c.error){ h+='<div style="color:var(--muted2);font-size:13px">'+esc(c.error)+'</div></div>'; return; }
-    h+='<div class="cnums">'+
-       '<span class="pill"><span class="dot" style="background:var(--ok)"></span>OK <b>'+c.OK+'</b></span>'+
-       '<span class="pill"><span class="dot" style="background:var(--red)"></span>F <b>'+c.F+'</b></span>'+
-       '<span class="pill"><span class="dot" style="background:var(--warn)"></span>J <b>'+c.J+'</b></span>'+
-       '<span class="pill"><span class="dot" style="background:var(--blue)"></span>L <b>'+c.L+'</b></span>'+
-       '<span style="color:var(--muted2)">'+c.entrenamientos+' entren.</span></div>';
-    if(c.alertas&&c.alertas.length){
-      h+='<div class="alerta"><div class="at">⚠ Faltaron mas de 2 veces</div>';
-      h+=c.alertas.map(a=>esc(a.nombre)+' ('+a.faltas+')').join(', ');
-      h+='</div>';
-    }
-    h+='</div>';
-  });
+function pct(n,total){ return total? Math.round(n/total*100) : 0; }
+
+function render(c, rep){
+  if(c.error){ $('result').innerHTML='<div class="repcard"><div class="rt">'+esc(c.sede)+' · '+esc(c.categoria)+'</div><div class="okmsg">'+esc(c.error)+'</div></div>'; return; }
+  const total=c.OK+c.F+c.J+c.L;
+  let h='<div class="repcard">';
+  h+='<div class="rt">'+esc(c.sede)+' · '+esc(c.categoria)+'</div>';
+  h+='<div class="rmeta">Semana '+rep.desde+' a '+rep.hasta+' · '+c.entrenamientos+' entrenamientos</div>';
+  h+='<div class="chart-box"><canvas id="chart"></canvas></div>';
+  h+='<div class="legend">'+
+     lg('var(--ok)','Asistió (OK)',c.OK,pct(c.OK,total))+
+     lg('var(--red)','Faltó (F)',c.F,pct(c.F,total))+
+     lg('var(--warn)','Justificado (J)',c.J,pct(c.J,total))+
+     lg('var(--blue)','Lesionado (L)',c.L,pct(c.L,total))+
+     '</div>';
+  if(c.alertas&&c.alertas.length){
+    h+='<div class="alerta"><div class="at">⚠ Faltaron más de 2 veces</div><ul>';
+    h+=c.alertas.map(a=>'<li><span>'+esc(a.nombre)+'</span><span class="fx">'+a.faltas+' faltas</span></li>').join('');
+    h+='</ul></div>';
+  } else {
+    h+='<div class="okmsg">Sin alertas: nadie faltó más de 2 veces.</div>';
+  }
+  h+='</div>';
   $('result').innerHTML=h;
+  drawChart(c);
+}
+function lg(color,label,val,p){
+  return '<div class="lg"><span class="dot" style="background:'+color+'"></span>'+label+' <b>'+p+'% ('+val+')</b></div>';
+}
+function drawChart(c){
+  if(CHART){ CHART.destroy(); CHART=null; }
+  const ctx=document.getElementById('chart');
+  CHART=new Chart(ctx,{
+    type:'doughnut',
+    data:{labels:['Asistió','Faltó','Justificado','Lesionado'],
+      datasets:[{data:[c.OK,c.F,c.J,c.L],backgroundColor:['#27c281','#ff4d5e','#ffb020','#64c8ff'],borderColor:'#0c0c0e',borderWidth:3}]},
+    options:{cutout:'62%',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(x){const t=x.dataset.data.reduce((a,b)=>a+b,0);return x.label+': '+x.raw+' ('+(t?Math.round(x.raw/t*100):0)+'%)';}}}}}
+  });
 }
 
 $('btn-pdf').onclick=()=>{
-  if(!REP) return;
+  if(!CAT) return;
+  const c=CAT.c, rep=CAT.rep; const total=c.OK+c.F+c.J+c.L;
   const {jsPDF}=window.jspdf; const doc=new jsPDF({unit:'mm',format:'a4'});
-  const W=210,M=15; let y=20;
-  const PINK=[199,15,110];
+  const W=210,M=15; let y=20; const PINK=[199,15,110];
   doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(...PINK);
   doc.text('Reporte de Asistencia — Acción Fútbol',M,y); y+=7;
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(20);
+  doc.text(c.sede+' · '+c.categoria,M,y); y+=6;
   doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(90);
-  doc.text('Semana: '+REP.desde+' a '+REP.hasta,M,y); y+=8;
-  const t=REP.totales;
-  doc.setTextColor(20); doc.setFontSize(11);
-  doc.text('Totales — OK: '+t.OK+'   F: '+t.F+'   J: '+t.J+'   L: '+t.L,M,y); y+=8;
-  doc.setDrawColor(220); doc.line(M,y,W-M,y); y+=7;
-  (REP.categorias||[]).forEach(c=>{
-    if(y>270){ doc.addPage(); y=20; }
-    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(20);
-    doc.text(c.sede+' · '+c.categoria,M,y); y+=5;
-    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(80);
-    if(c.error){ doc.text('  '+c.error,M,y); y+=7; return; }
-    doc.text('  OK: '+c.OK+'   F: '+c.F+'   J: '+c.J+'   L: '+c.L+'   ('+c.entrenamientos+' entrenamientos)',M,y); y+=5;
-    if(c.alertas&&c.alertas.length){
-      doc.setTextColor(200,40,60);
-      const txt='  Alerta (>2 faltas): '+c.alertas.map(a=>a.nombre+' ('+a.faltas+')').join(', ');
-      const lines=doc.splitTextToSize(txt,W-2*M);
-      doc.text(lines,M,y); y+=lines.length*5;
-    }
-    y+=3;
+  doc.text('Semana: '+rep.desde+' a '+rep.hasta+'   ('+c.entrenamientos+' entrenamientos)',M,y); y+=8;
+  try{ if(CHART){ const img=CHART.toBase64Image(); doc.addImage(img,'PNG',M,y,60,60); } }catch(e){}
+  let ty=y+6;
+  doc.setFontSize(11); doc.setTextColor(20);
+  [['Asistió (OK)',c.OK],['Faltó (F)',c.F],['Justificado (J)',c.J],['Lesionado (L)',c.L]].forEach(r=>{
+    doc.text(r[0]+': '+r[1]+'  ('+pct(r[1],total)+'%)',M+68,ty); ty+=8;
   });
-  doc.save('reporte-asistencia-'+REP.desde+'.pdf');
+  y=Math.max(y+64,ty)+4;
+  doc.setDrawColor(220); doc.line(M,y,W-M,y); y+=8;
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(200,40,60);
+  doc.text('Faltaron más de 2 veces:',M,y); y+=6;
+  doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(40);
+  if(c.alertas&&c.alertas.length){
+    c.alertas.forEach(a=>{ if(y>280){doc.addPage();y=20;} doc.text('•  '+a.nombre+' — '+a.faltas+' faltas',M,y); y+=6; });
+  } else { doc.setTextColor(39,160,106); doc.text('Sin alertas.',M,y); }
+  doc.save('reporte-'+CAT.sede+'-'+CAT.cat+'-'+rep.desde+'.pdf');
 };
 
 function esc(s){ return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
