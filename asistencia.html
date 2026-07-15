@@ -129,7 +129,19 @@ $('btn-login').onclick = async ()=>{
   if(!email||!pass){ showErr('login-err','Ingresa correo y contrasena.'); return; }
   $('btn-login').disabled=true;
   try{ await fbAuth.signInWithEmailAndPassword(email,pass); }
-  catch(e){ showErr('login-err','Correo o contrasena incorrectos.'); }
+  catch(e){
+    var msg;
+    switch(e.code){
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential': msg='Contrasena incorrecta.'; break;
+      case 'auth/user-not-found': msg='Esa cuenta no existe en Firebase.'; break;
+      case 'auth/invalid-email': msg='El correo no es valido.'; break;
+      case 'auth/unauthorized-domain': msg='Dominio no autorizado en Firebase.'; break;
+      case 'auth/too-many-requests': msg='Demasiados intentos. Espera unos minutos.'; break;
+      default: msg=(e.code||'Error')+' - '+(e.message||'');
+    }
+    showErr('login-err',msg);
+  }
   $('btn-login').disabled=false;
 };
 $('btn-logout').onclick = ()=>fbAuth.signOut();
