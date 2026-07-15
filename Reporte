@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acción Fútbol · Reporte de Asistencia</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0c0c0e;--panel:#161619;--panel2:#1f1f24;--line:#2a2a30;--pink:#ff2e93;--pink-deep:#c70f6e;--ink:#f5f5f7;--muted:#9a9aa3;--muted2:#5c5c66;--ok:#27c281;--warn:#ffb020;--blue:#64c8ff;--red:#ff4d5e;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;min-height:100vh}
+.wrap{max-width:760px;margin:0 auto;padding:24px 16px 60px}
+h1{font-family:'Oswald';font-weight:700;text-transform:uppercase;font-size:26px;margin-bottom:4px}
+h1 em{color:var(--pink);font-style:normal}
+.sub{color:var(--muted);font-size:13px;margin-bottom:20px}
+label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px;font-weight:600}
+input{width:100%;background:var(--panel);border:1.5px solid var(--line);border-radius:12px;color:var(--ink);font-size:15px;padding:13px 14px;outline:none}
+input:focus{border-color:var(--pink)}
+.btn{width:100%;padding:14px;border:none;border-radius:12px;background:var(--pink);color:#fff;font-family:'Oswald';font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.btn:hover{filter:brightness(1.1)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px}
+.hidden{display:none}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.backhome{position:fixed;top:14px;left:14px;background:var(--pink);border:none;border-radius:8px;padding:7px 13px;font-size:11px;font-family:'Oswald';font-weight:600;text-transform:uppercase;color:#fff;cursor:pointer;z-index:50;text-decoration:none}
+.logout{position:fixed;top:14px;right:14px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:11px;color:var(--muted);cursor:pointer;z-index:50}
+.err{background:rgba(255,77,94,.1);border:1px solid rgba(255,77,94,.3);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--red);margin-top:10px;display:none}
+.tot{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0}
+.tc{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 6px;text-align:center}
+.tc .v{font-family:'Oswald';font-size:26px;font-weight:700}
+.tc .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.catcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px}
+.catcard .ct{font-family:'Oswald';font-weight:600;font-size:15px;text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px}
+.catcard .cnums{display:flex;gap:14px;flex-wrap:wrap;font-size:13px}
+.catcard .cnums b{font-family:'Oswald'}
+.alerta{background:rgba(255,77,94,.08);border:1px solid rgba(255,77,94,.3);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:13px}
+.alerta .at{color:var(--red);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.loader{text-align:center;color:var(--muted);padding:30px;font-size:14px}
+.pill{display:inline-flex;align-items:center;gap:5px}
+.dot{width:9px;height:9px;border-radius:50%}
+</style>
+</head>
+<body>
+<a class="backhome" href="/">&#8592; Inicio</a>
+
+<div id="login" class="wrap">
+  <div style="height:40px"></div>
+  <h1>Reporte de <em>Asistencia</em></h1>
+  <p class="sub">Acción Fútbol · Portal del Entrenador</p>
+  <div class="card">
+    <div style="margin-bottom:14px"><label>Correo</label><input type="email" id="email" autocomplete="username"></div>
+    <div style="margin-bottom:14px"><label>Contraseña</label><input type="password" id="pass" autocomplete="current-password"></div>
+    <button class="btn" id="btn-login">Ingresar</button>
+    <div class="err" id="login-err"></div>
+  </div>
+</div>
+
+<div id="app" class="wrap hidden">
+  <div class="logout" id="btn-logout">Salir</div>
+  <h1>Reporte de <em>Asistencia</em></h1>
+  <p class="sub">Resumen semanal por sede y categoría.</p>
+  <div class="card">
+    <div class="row2">
+      <div><label>Desde</label><input type="date" id="desde"></div>
+      <div><label>Hasta</label><input type="date" id="hasta"></div>
+    </div>
+    <div style="height:12px"></div>
+    <button class="btn" id="btn-generar">Generar reporte</button>
+    <div class="err" id="app-err"></div>
+  </div>
+  <div id="result"></div>
+  <button class="btn btn-ghost hidden" id="btn-pdf" style="margin-top:8px">Descargar PDF</button>
+</div>
+
+<script>
+const API_ASIS = 'https://script.google.com/macros/s/AKfycbwa53UNt6Q1MmxCt9g8EGB63Hu_r-UqzUQ1Uh51YWfe5ZuZCFTSVenPFLUGOVnghbIt/exec';
+const firebaseConfig = {
+  apiKey: "AIzaSyDZZsCyfgVTBOswlFPrbdf_pr7uzmQgnTs",
+  authDomain: "asistencia-accion-futbol.firebaseapp.com",
+  projectId: "asistencia-accion-futbol",
+  storageBucket: "asistencia-accion-futbol.firebasestorage.app",
+  messagingSenderId: "1007230869241",
+  appId: "1:1007230869241:web:d11ce0c37a820325cecc28"
+};
+firebase.initializeApp(firebaseConfig);
+const fbAuth = firebase.auth();
+const $ = id => document.getElementById(id);
+let REP = null;
+
+function showErr(id,m){ $(id).textContent=m; $(id).style.display='block'; }
+function hideErr(id){ $(id).style.display='none'; }
+function fmt(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function semanaPasada(){
+  const h=new Date(), dow=h.getDay();
+  const lunEsta=new Date(h); lunEsta.setDate(h.getDate()-((dow+6)%7));
+  const lunPas=new Date(lunEsta); lunPas.setDate(lunEsta.getDate()-7);
+  const domPas=new Date(lunPas); domPas.setDate(lunPas.getDate()+6);
+  return {desde:fmt(lunPas), hasta:fmt(domPas)};
+}
+async function token(){ const u=fbAuth.currentUser; if(!u) throw new Error('sin sesion'); return await u.getIdToken(); }
+
+$('btn-login').onclick=async()=>{
+  hideErr('login-err');
+  const email=$('email').value.trim(), pass=$('pass').value;
+  if(!email||!pass){ showErr('login-err','Ingresa correo y contrasena.'); return; }
+  $('btn-login').disabled=true;
+  try{ await fbAuth.signInWithEmailAndPassword(email,pass); }
+  catch(e){ showErr('login-err', e.code==='auth/invalid-credential'||e.code==='auth/wrong-password'?'Correo o contrasena incorrectos.':(e.code||'Error')); }
+  $('btn-login').disabled=false;
+};
+$('btn-logout').onclick=()=>fbAuth.signOut();
+
+fbAuth.onAuthStateChanged(u=>{
+  if(u){
+    $('login').classList.add('hidden'); $('app').classList.remove('hidden');
+    const s=semanaPasada(); $('desde').value=s.desde; $('hasta').value=s.hasta;
+  } else { $('app').classList.add('hidden'); $('login').classList.remove('hidden'); }
+});
+
+$('btn-generar').onclick=async()=>{
+  hideErr('app-err');
+  const desde=$('desde').value, hasta=$('hasta').value;
+  if(!desde||!hasta){ showErr('app-err','Elige el rango de fechas.'); return; }
+  $('result').innerHTML='<div class="loader">Calculando… (puede tardar unos segundos)</div>';
+  $('btn-pdf').classList.add('hidden');
+  try{
+    const t=await token();
+    const q='?action=reporte&desde='+encodeURIComponent(desde)+'&hasta='+encodeURIComponent(hasta)+'&idToken='+encodeURIComponent(t);
+    const res=await fetch(API_ASIS+q,{cache:'no-store'});
+    const data=await res.json();
+    if(data.error){ showErr('app-err',data.error); $('result').innerHTML=''; return; }
+    REP=data; render(data);
+    $('btn-pdf').classList.remove('hidden');
+  }catch(e){ showErr('app-err','No se pudo generar el reporte.'); $('result').innerHTML=''; }
+};
+
+function render(d){
+  const t=d.totales;
+  let h='<div class="tot">'+
+    '<div class="tc"><div class="v" style="color:var(--ok)">'+t.OK+'</div><div class="l">Asistio</div></div>'+
+    '<div class="tc"><div class="v" style="color:var(--red)">'+t.F+'</div><div class="l">Falto</div></div>'+
+    '<div class="tc"><div class="v" style="color:var(--warn)">'+t.J+'</div><div class="l">Justif.</div></div>'+
+    '<div class="tc"><div class="v" style="color:var(--blue)">'+t.L+'</div><div class="l">Lesion.</div></div></div>';
+  (d.categorias||[]).forEach(c=>{
+    h+='<div class="catcard"><div class="ct">'+esc(c.sede)+' · '+esc(c.categoria)+'</div>';
+    if(c.error){ h+='<div style="color:var(--muted2);font-size:13px">'+esc(c.error)+'</div></div>'; return; }
+    h+='<div class="cnums">'+
+       '<span class="pill"><span class="dot" style="background:var(--ok)"></span>OK <b>'+c.OK+'</b></span>'+
+       '<span class="pill"><span class="dot" style="background:var(--red)"></span>F <b>'+c.F+'</b></span>'+
+       '<span class="pill"><span class="dot" style="background:var(--warn)"></span>J <b>'+c.J+'</b></span>'+
+       '<span class="pill"><span class="dot" style="background:var(--blue)"></span>L <b>'+c.L+'</b></span>'+
+       '<span style="color:var(--muted2)">'+c.entrenamientos+' entren.</span></div>';
+    if(c.alertas&&c.alertas.length){
+      h+='<div class="alerta"><div class="at">⚠ Faltaron mas de 2 veces</div>';
+      h+=c.alertas.map(a=>esc(a.nombre)+' ('+a.faltas+')').join(', ');
+      h+='</div>';
+    }
+    h+='</div>';
+  });
+  $('result').innerHTML=h;
+}
+
+$('btn-pdf').onclick=()=>{
+  if(!REP) return;
+  const {jsPDF}=window.jspdf; const doc=new jsPDF({unit:'mm',format:'a4'});
+  const W=210,M=15; let y=20;
+  const PINK=[199,15,110];
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(...PINK);
+  doc.text('Reporte de Asistencia — Acción Fútbol',M,y); y+=7;
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(90);
+  doc.text('Semana: '+REP.desde+' a '+REP.hasta,M,y); y+=8;
+  const t=REP.totales;
+  doc.setTextColor(20); doc.setFontSize(11);
+  doc.text('Totales — OK: '+t.OK+'   F: '+t.F+'   J: '+t.J+'   L: '+t.L,M,y); y+=8;
+  doc.setDrawColor(220); doc.line(M,y,W-M,y); y+=7;
+  (REP.categorias||[]).forEach(c=>{
+    if(y>270){ doc.addPage(); y=20; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(20);
+    doc.text(c.sede+' · '+c.categoria,M,y); y+=5;
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(80);
+    if(c.error){ doc.text('  '+c.error,M,y); y+=7; return; }
+    doc.text('  OK: '+c.OK+'   F: '+c.F+'   J: '+c.J+'   L: '+c.L+'   ('+c.entrenamientos+' entrenamientos)',M,y); y+=5;
+    if(c.alertas&&c.alertas.length){
+      doc.setTextColor(200,40,60);
+      const txt='  Alerta (>2 faltas): '+c.alertas.map(a=>a.nombre+' ('+a.faltas+')').join(', ');
+      const lines=doc.splitTextToSize(txt,W-2*M);
+      doc.text(lines,M,y); y+=lines.length*5;
+    }
+    y+=3;
+  });
+  doc.save('reporte-asistencia-'+REP.desde+'.pdf');
+};
+
+function esc(s){ return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+</script>
+</body>
+</html>
