@@ -931,7 +931,7 @@ function showToast(msg){
   window._toastTimer=setTimeout(()=>t.classList.remove('show'), 2200);
 }
 $('btn-ficha').onclick = showFicha;
-$('btn-asistencia').onclick = showAsistencia;
+$('btn-asistencia').onclick = ()=>{ location.href='/asistencia.html'; };
 $('btn-inicio').onclick = showHome;
 $('btn-asis-inicio').onclick = showHome;
 $('btn-planificaciones').onclick = showPlan;
