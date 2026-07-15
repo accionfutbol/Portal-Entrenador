@@ -526,10 +526,7 @@ footer strong{color:var(--muted)}
         <span class="home-btn-icon">📅</span>
         <span>Planificaciones</span>
       </button>
-      <button class="home-btn home-btn-ghost" id="btn-alertas">
-        <span class="home-btn-icon">⚠️</span>
-        <span>Alertas de Inasistencia</span>
-      </button>
+
     </div>
   </div>
 </div>
@@ -1750,7 +1747,6 @@ function hideAlertas(){
   $('view-alertas').style.display = 'none';
   $('view-home').style.display = 'flex';
 }
-$('btn-alertas').onclick = showAlertas;
 $('btn-alertas-inicio').onclick = hideAlertas;
 
 $('alertas-fecha').addEventListener('change', function(){
