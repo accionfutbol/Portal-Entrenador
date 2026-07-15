@@ -518,6 +518,10 @@ footer strong{color:var(--muted)}
         <span class="home-btn-icon">✓</span>
         <span>Asistencia</span>
       </button>
+      <button class="home-btn home-btn-ghost" id="btn-reporte">
+        <span class="home-btn-icon">📊</span>
+        <span>Reporte de Asistencia</span>
+      </button>
       <button class="home-btn home-btn-ghost" id="btn-planificaciones">
         <span class="home-btn-icon">📅</span>
         <span>Planificaciones</span>
@@ -932,6 +936,7 @@ function showToast(msg){
 }
 $('btn-ficha').onclick = showFicha;
 $('btn-asistencia').onclick = ()=>{ location.href='/asistencia.html'; };
+$('btn-reporte').onclick = ()=>{ location.href='/reporte.html'; };
 $('btn-inicio').onclick = showHome;
 $('btn-asis-inicio').onclick = showHome;
 $('btn-planificaciones').onclick = showPlan;
