@@ -46,6 +46,14 @@ input:focus,select:focus{border-color:var(--pink)}
 .loader{text-align:center;color:var(--muted);padding:20px;font-size:14px}
 .addbtn{width:100%;padding:11px;border:1.5px dashed var(--line);background:transparent;color:var(--muted);border-radius:10px;cursor:pointer;font-size:13px}
 .addbtn:hover{border-color:var(--pink);color:var(--pink)}
+.sugerencias{position:absolute;left:0;right:0;top:100%;z-index:30;background:var(--panel2);border:1px solid var(--line);border-radius:10px;margin-top:4px;max-height:300px;overflow-y:auto;box-shadow:0 12px 30px rgba(0,0,0,.55)}
+.sug{padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--line)}
+.sug:last-child{border-bottom:0}
+.sug:hover{background:var(--panel)}
+.sug .sn{font-size:14px;font-weight:600}
+.sug .sm{font-size:11px;color:var(--muted);margin-top:2px}
+.sug-empty{padding:10px 12px;color:var(--muted);font-size:13px}
+.plsub{font-size:11px;color:var(--muted);font-weight:400;margin-top:2px}
 </style>
 </head>
 <body>
@@ -86,12 +94,16 @@ input:focus,select:focus{border-color:var(--pink)}
       <div class="fld"><label>Goles Acción Fútbol</label><input type="number" id="golAF" min="0" value=""></div>
       <div class="fld"><label>Goles Rival</label><input type="number" id="golRival" min="0" value=""></div>
     </div>
-    <button class="btn" id="btn-plantel">Cargar plantel</button>
     <div class="err" id="app-err"></div>
   </div>
 
-  <div id="jug-wrap" class="hidden">
+  <div id="jug-wrap">
     <div class="sect">Jugadores</div>
+    <div class="fld" style="position:relative">
+      <label>Buscar y agregar jugador</label>
+      <input type="text" id="buscar" placeholder="Escribe el nombre del jugador..." autocomplete="off">
+      <div id="sugerencias" class="sugerencias hidden"></div>
+    </div>
     <div id="jugadores"></div>
     <button class="addbtn" id="btn-add">+ Agregar jugador manual</button>
   </div>
@@ -149,6 +161,8 @@ fbAuth.onAuthStateChanged(async u=>{
     $('login').classList.add('hidden'); $('app').classList.remove('hidden');
     $('dia').value=todayStr();
     await cargarConfig();
+    await cargarTodos();
+    $('savebar').classList.remove('hidden');
   } else { $('app').classList.add('hidden'); $('savebar').classList.add('hidden'); $('login').classList.remove('hidden'); }
 });
 
@@ -170,23 +184,39 @@ async function cargarConfig(){
   }catch(e){ showErr('app-err','No se pudo cargar la configuracion.'); }
 }
 
-$('btn-plantel').onclick=async()=>{
-  hideErr('app-err');
-  const val=$('sedecat').value;
-  if(!val){ showErr('app-err','Elige sede y categoria.'); return; }
-  const parts=val.split('||'), sede=parts[0], cat=parts[1];
-  $('jugadores').innerHTML='<div class="loader">Cargando plantel...</div>'; $('jug-wrap').classList.remove('hidden');
+let ALL=[];
+function noAcc(s){ return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
+function normRutJS(r){ return String(r||'').replace(/[.\-\s]/g,'').toUpperCase(); }
+
+async function cargarTodos(){
   try{
     const t=await token();
-    const q='?action=plantel&sede='+encodeURIComponent(sede)+'&cat='+encodeURIComponent(cat)+'&idToken='+encodeURIComponent(t);
-    const res=await fetch(API_ASIS+q,{cache:'no-store'});
+    const res=await fetch(API_ASIS+'?action=todos&idToken='+encodeURIComponent(t),{cache:'no-store'});
     const data=await res.json();
-    if(data.error){ showErr('app-err',data.error); $('jugadores').innerHTML=''; return; }
-    JUG=(data.jugadores||[]).map(j=>({nombre:j.nombre,estado:'Suplente',pos:'',min:'',goles:'',gr:'',ta:'',tr:'',nota:''}));
-    renderJug();
-    $('savebar').classList.remove('hidden');
-  }catch(e){ showErr('app-err','No se pudo cargar el plantel.'); $('jugadores').innerHTML=''; }
-};
+    if(data.error){ showErr('app-err',data.error); return; }
+    ALL=(data.jugadores||[]).map(j=>({nombre:j.nombre,rut:j.rut,sede:j.sede,categoria:j.categoria,_n:noAcc(j.nombre)}));
+  }catch(e){ showErr('app-err','No se pudieron cargar los jugadores.'); }
+}
+
+$('buscar').addEventListener('input',()=>{
+  const q=noAcc($('buscar').value.trim());
+  const box=$('sugerencias');
+  if(q.length<2){ box.classList.add('hidden'); box.innerHTML=''; return; }
+  const ya=new Set(JUG.map(p=>normRutJS(p.rut)).filter(Boolean));
+  const matches=ALL.filter(p=>p._n.includes(q) && !ya.has(normRutJS(p.rut))).slice(0,10);
+  if(!matches.length){ box.innerHTML='<div class="sug-empty">Sin coincidencias</div>'; box.classList.remove('hidden'); return; }
+  box.innerHTML=matches.map(p=>'<div class="sug" data-ai="'+ALL.indexOf(p)+'"><div class="sn">'+esc(p.nombre)+'</div><div class="sm">'+esc(p.sede)+' · '+esc(p.categoria)+(p.rut?' · '+esc(p.rut):'')+'</div></div>').join('');
+  box.classList.remove('hidden');
+  box.querySelectorAll('.sug').forEach(el=>{ el.onclick=()=>agregarJugador(+el.dataset.ai); });
+});
+document.addEventListener('click',(e)=>{ if(!e.target.closest('#buscar') && !e.target.closest('#sugerencias')){ $('sugerencias').classList.add('hidden'); } });
+
+function agregarJugador(ai){
+  const p=ALL[ai]; if(!p) return;
+  JUG.push({nombre:p.nombre,rut:p.rut,sede:p.sede,categoria:p.categoria,estado:'Suplente',pos:'',min:'',goles:'',gr:'',ta:'',tr:'',nota:''});
+  $('buscar').value=''; $('sugerencias').classList.add('hidden'); $('sugerencias').innerHTML='';
+  renderJug();
+}
 
 $('btn-add').onclick=()=>{ JUG.push({nombre:'',estado:'Suplente',pos:'',min:'',goles:'',gr:'',ta:'',tr:'',nota:'',manual:true}); renderJug(); };
 
@@ -194,7 +224,7 @@ function renderJug(){
   let html='';
   JUG.forEach((p,i)=>{
     html+='<div class="pl"><div class="plh"><div class="plname">'+
-      (p.manual? '<input type="text" placeholder="Nombre jugador" data-i="'+i+'" data-k="nombre" value="'+esc(p.nombre)+'">' : esc(p.nombre))+
+      (p.manual? '<input type="text" placeholder="Nombre jugador" data-i="'+i+'" data-k="nombre" value="'+esc(p.nombre)+'">' : esc(p.nombre)+(p.sede?'<div class="plsub">'+esc(p.sede)+' · '+esc(p.categoria)+'</div>':''))+
       '</div><button class="del" data-del="'+i+'">Quitar</button></div>';
     html+='<div class="stats">';
     html+=selCell(i,'estado',ESTADOS,p.estado);
