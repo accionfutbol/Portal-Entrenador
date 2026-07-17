@@ -46,6 +46,13 @@ input:focus,select:focus{border-color:var(--pink)}
 .alerta li:last-child{border-bottom:0}
 .alerta li .fx{color:var(--red);font-family:'Oswald';font-weight:700;flex-shrink:0}
 .loader{text-align:center;color:var(--muted);padding:30px;font-size:14px}
+.clist{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:12px}
+.clh{font-family:'Oswald';font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.clh .dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.clist ul{list-style:none;margin:0;padding:0}
+.clist li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
+.clist li:last-child{border-bottom:0}
+.clist li .cnt{font-family:'Oswald';font-weight:700;flex-shrink:0}
 .okmsg{color:var(--ok);text-align:center;padding:16px;font-size:14px}
 </style>
 </head>
@@ -185,16 +192,22 @@ function render(c, rep){
      lg('var(--warn)','Justificado (J)',c.J,pct(c.J,total))+
      lg('var(--blue)','Lesionado (L)',c.L,pct(c.L,total))+
      '</div>';
-  if(c.alertas&&c.alertas.length){
-    h+='<div class="alerta"><div class="at">⚠ Faltaron más de 2 veces</div><ul>';
-    h+=c.alertas.map(a=>'<li><span>'+esc(a.nombre)+'</span><span class="fx">'+a.faltas+' faltas</span></li>').join('');
-    h+='</ul></div>';
-  } else {
-    h+='<div class="okmsg">Sin alertas: nadie faltó más de 2 veces.</div>';
-  }
+  const jug=c.jugadores||[];
+  h+=listaColor('Asistieron','#27c281', jug.filter(p=>p.OK>0).map(p=>({n:p.nombre,c:p.OK})));
+  h+=listaColor('No asistieron','#ff4d5e', jug.filter(p=>p.F>0).map(p=>({n:p.nombre,c:p.F,alerta:p.F>2})));
+  h+=listaColor('Justificados','#ffb020', jug.filter(p=>p.J>0).map(p=>({n:p.nombre,c:p.J})));
+  h+=listaColor('Lesionados','#64c8ff', jug.filter(p=>p.L>0).map(p=>({n:p.nombre,c:p.L})));
   h+='</div>';
   $('result').innerHTML=h;
   drawChart(c);
+}
+function listaColor(titulo,color,items){
+  if(!items.length) return '';
+  items.sort((a,b)=>a.n.localeCompare(b.n,'es'));
+  let h='<div class="clist" style="border-left-color:'+color+'"><div class="clh" style="color:'+color+'"><span class="dot" style="background:'+color+'"></span>'+titulo+' ('+items.length+')</div><ul>';
+  h+=items.map(p=>'<li><span>'+(p.alerta?'&#9888; ':'')+esc(p.n)+'</span><span class="cnt" style="color:'+color+'">'+p.c+'</span></li>').join('');
+  h+='</ul></div>';
+  return h;
 }
 function lg(color,label,val,p){
   return '<div class="lg"><span class="dot" style="background:'+color+'"></span>'+label+' <b>'+p+'% ('+val+')</b></div>';
@@ -227,14 +240,22 @@ $('btn-pdf').onclick=()=>{
   [['Asistió (OK)',c.OK],['Faltó (F)',c.F],['Justificado (J)',c.J],['Lesionado (L)',c.L]].forEach(r=>{
     doc.text(r[0]+': '+r[1]+'  ('+pct(r[1],total)+'%)',M+68,ty); ty+=8;
   });
-  y=Math.max(y+64,ty)+4;
+  y=Math.max(y+64,ty)+6;
   doc.setDrawColor(220); doc.line(M,y,W-M,y); y+=8;
-  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(200,40,60);
-  doc.text('Faltaron más de 2 veces:',M,y); y+=6;
-  doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(40);
-  if(c.alertas&&c.alertas.length){
-    c.alertas.forEach(a=>{ if(y>280){doc.addPage();y=20;} doc.text('•  '+a.nombre+' — '+a.faltas+' faltas',M,y); y+=6; });
-  } else { doc.setTextColor(39,160,106); doc.text('Sin alertas.',M,y); }
+  const jug=c.jugadores||[];
+  function grupo(titulo,rgb,items){
+    if(!items.length) return;
+    if(y>268){ doc.addPage(); y=20; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(rgb[0],rgb[1],rgb[2]);
+    doc.text(titulo+' ('+items.length+')',M,y); y+=6;
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(40);
+    items.sort((a,b)=>a.n.localeCompare(b.n,'es')).forEach(p=>{ if(y>285){doc.addPage();y=20;} doc.text('•  '+p.n+'  ('+p.c+')',M+2,y); y+=5.5; });
+    y+=4;
+  }
+  grupo('ASISTIERON',[39,160,106], jug.filter(p=>p.OK>0).map(p=>({n:p.nombre,c:p.OK})));
+  grupo('NO ASISTIERON',[210,50,70], jug.filter(p=>p.F>0).map(p=>({n:p.nombre,c:p.F})));
+  grupo('JUSTIFICADOS',[200,140,20], jug.filter(p=>p.J>0).map(p=>({n:p.nombre,c:p.J})));
+  grupo('LESIONADOS',[50,150,210], jug.filter(p=>p.L>0).map(p=>({n:p.nombre,c:p.L})));
   doc.save('reporte-'+CAT.sede+'-'+CAT.cat+'-'+rep.desde+'.pdf');
 };
 
