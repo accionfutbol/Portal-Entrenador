@@ -85,6 +85,8 @@ input:focus,select:focus{border-color:var(--pink)}
 .collap-body li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
 .collap-body li:last-child{border-bottom:0}
 .collap-body li .cnt{font-family:'Oswald';font-weight:700}
+.collap-body li .linfo{flex:1;min-width:0}
+.collap-body li .mot{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45}
 .collap-empty{color:var(--muted);font-size:13px;padding:6px 0}
 </style>
 </head>
@@ -258,7 +260,7 @@ function render(c, rep){
 
   // ── Listas desplegables F / J / L ──
   h+=collap('F','No asistieron','#ff4d5e', jug.filter(p=>p.F>0).map(p=>({n:p.nombre,c:p.F,alerta:p.F>=2})));
-  h+=collap('J','Justificados','#ffb020', jug.filter(p=>p.J>0).map(p=>({n:p.nombre,c:p.J})));
+  h+=collap('J','Justificados','#ffb020', jug.filter(p=>p.J>0).map(p=>({n:p.nombre,c:p.J,motivos:p.motivos||[]})));
   h+=collap('L','Lesionados','#64c8ff', jug.filter(p=>p.L>0).map(p=>({n:p.nombre,c:p.L})));
 
   h+='</div>';
@@ -270,7 +272,10 @@ function collap(letra,titulo,color,items){
   const id='cp'+(_cid++);
   items.sort((a,b)=>a.n.localeCompare(b.n,'es'));
   const body=items.length
-    ? '<ul>'+items.map(p=>'<li><span>'+(p.alerta?'&#9888; ':'')+esc(p.n)+'</span><span class="cnt" style="color:'+color+'">'+p.c+'</span></li>').join('')+'</ul>'
+    ? '<ul>'+items.map(p=>{
+        const mot=(p.motivos&&p.motivos.length)?'<div class="mot">'+[...new Set(p.motivos)].map(m=>'&#8226; '+esc(m)).join('<br>')+'</div>':'';
+        return '<li><div class="linfo"><span>'+(p.alerta?'&#9888; ':'')+esc(p.n)+'</span>'+mot+'</div><span class="cnt" style="color:'+color+'">'+p.c+'</span></li>';
+      }).join('')+'</ul>'
     : '<div class="collap-empty">Sin jugadores.</div>';
   return '<div class="collap"><div class="collap-h" style="border-left-color:'+color+'" onclick="toggleCollap(\''+id+'\')">'+
          '<span class="collap-badge" style="background:'+color+'">'+letra+'</span> '+titulo+' ('+items.length+')'+
@@ -359,11 +364,19 @@ $('btn-pdf').onclick=()=>{
     doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(rgb[0],rgb[1],rgb[2]);
     doc.text(titulo+' ('+items.length+')',M,y); y+=6;
     doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(40);
-    items.sort((a,b)=>a.n.localeCompare(b.n,'es')).forEach(p=>{ if(y>285){doc.addPage();y=20;} doc.text('•  '+p.n+'  ('+p.c+')',M+2,y); y+=5.5; });
+    items.sort((a,b)=>a.n.localeCompare(b.n,'es')).forEach(p=>{
+      if(y>285){doc.addPage();y=20;}
+      doc.setFontSize(10); doc.setTextColor(40); doc.text('•  '+p.n+'  ('+p.c+')',M+2,y); y+=5.5;
+      if(p.m && p.m.length){
+        doc.setFontSize(9); doc.setTextColor(120);
+        p.m.forEach(mv=>{ const ls=doc.splitTextToSize('- '+mv, W-2*M-8); ls.forEach(l=>{ if(y>285){doc.addPage();y=20;} doc.text(l,M+8,y); y+=4.6; }); });
+        y+=1;
+      }
+    });
     y+=4;
   }
   grupo('F — NO ASISTIERON',[210,50,70], jug.filter(p=>p.F>0).map(p=>({n:p.nombre,c:p.F})));
-  grupo('J — JUSTIFICADOS',[200,140,20], jug.filter(p=>p.J>0).map(p=>({n:p.nombre,c:p.J})));
+  grupo('J — JUSTIFICADOS',[200,140,20], jug.filter(p=>p.J>0).map(p=>({n:p.nombre,c:p.J,m:[...new Set(p.motivos||[])]})));
   grupo('L — LESIONADOS',[50,150,210], jug.filter(p=>p.L>0).map(p=>({n:p.nombre,c:p.L})));
 
   doc.save('reporte-'+CAT.sede+'-'+CAT.cat+'-'+rep.desde+'.pdf');
