@@ -7,6 +7,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -54,6 +55,37 @@ input:focus,select:focus{border-color:var(--pink)}
 .clist li:last-child{border-bottom:0}
 .clist li .cnt{font-family:'Oswald';font-weight:700;flex-shrink:0}
 .okmsg{color:var(--ok);text-align:center;padding:16px;font-size:14px}
+.rtab{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+.rtab th,.rtab td{border:1px solid var(--line);padding:8px 6px;text-align:center}
+.rtab th.tj,.rtab td.tj{text-align:left}
+.rtab thead th{font-family:'Oswald';font-size:12px;letter-spacing:.04em}
+.rtab th.tok{background:rgba(39,194,129,.18);color:var(--ok)}
+.rtab th.tf{background:rgba(255,77,94,.18);color:var(--red)}
+.rtab th.tju{background:rgba(255,176,32,.18);color:var(--warn)}
+.rtab th.tl{background:rgba(100,200,255,.18);color:var(--blue)}
+.rtab td.c-ok{color:var(--ok);font-family:'Oswald';font-weight:700}
+.rtab td.c-f{color:var(--red);font-family:'Oswald';font-weight:700}
+.rtab td.c-j{color:var(--warn);font-family:'Oswald';font-weight:700}
+.rtab td.c-l{color:var(--blue);font-family:'Oswald';font-weight:700}
+.rtab tbody td.tj{color:var(--ink);font-weight:600}
+.estado{margin:16px 0}
+.est-h{font-family:'Oswald';font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:12px;margin:12px 0 6px}
+.est-urg{color:var(--red)} .est-mod{color:var(--warn)}
+.est-card{border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:6px;line-height:1.4}
+.est-card.urg{background:rgba(255,77,94,.1);border:1px solid rgba(255,77,94,.35);color:#ffd0d5}
+.est-card.mod{background:rgba(255,176,32,.1);border:1px solid rgba(255,176,32,.35);color:#ffe6b8}
+.est-card.okc{background:rgba(39,194,129,.1);border:1px solid rgba(39,194,129,.3);color:#bff0d9}
+.est-note{color:var(--muted);font-size:12px;margin-top:6px}
+.collap{margin-top:10px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.collap-h{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;border-left:4px solid var(--line);background:var(--panel2);font-family:'Oswald';font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:13px;user-select:none}
+.collap-badge{width:22px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:#0c0c0e;font-weight:700;font-size:12px;flex-shrink:0}
+.collap-arrow{margin-left:auto;color:var(--muted)}
+.collap-body{padding:6px 14px 12px}
+.collap-body ul{list-style:none;margin:0;padding:0}
+.collap-body li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
+.collap-body li:last-child{border-bottom:0}
+.collap-body li .cnt{font-family:'Oswald';font-weight:700}
+.collap-empty{color:var(--muted);font-size:13px;padding:6px 0}
 </style>
 </head>
 <body>
@@ -182,6 +214,7 @@ function pct(n,total){ return total? Math.round(n/total*100) : 0; }
 function render(c, rep){
   if(c.error){ $('result').innerHTML='<div class="repcard"><div class="rt">'+esc(c.sede)+' · '+esc(c.categoria)+'</div><div class="okmsg">'+esc(c.error)+'</div></div>'; return; }
   const total=c.OK+c.F+c.J+c.L;
+  const jug=(c.jugadores||[]).slice().sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
   let h='<div class="repcard">';
   h+='<div class="rt">'+esc(c.sede)+' · '+esc(c.categoria)+'</div>';
   h+='<div class="rmeta">Semana '+rep.desde+' a '+rep.hasta+' · '+c.entrenamientos+' entrenamientos</div>';
@@ -192,22 +225,63 @@ function render(c, rep){
      lg('var(--warn)','Justificado (J)',c.J,pct(c.J,total))+
      lg('var(--blue)','Lesionado (L)',c.L,pct(c.L,total))+
      '</div>';
-  const jug=c.jugadores||[];
-  h+=listaColor('Asistieron','#27c281', jug.filter(p=>p.OK>0).map(p=>({n:p.nombre,c:p.OK})));
-  h+=listaColor('No asistieron','#ff4d5e', jug.filter(p=>p.F>0).map(p=>({n:p.nombre,c:p.F,alerta:p.F>2})));
-  h+=listaColor('Justificados','#ffb020', jug.filter(p=>p.J>0).map(p=>({n:p.nombre,c:p.J})));
-  h+=listaColor('Lesionados','#64c8ff', jug.filter(p=>p.L>0).map(p=>({n:p.nombre,c:p.L})));
+
+  // ── Tabla jugador × OK/F/J/L ──
+  h+='<table class="rtab"><thead><tr><th class="tj">JUGADOR</th><th class="tok">OK</th><th class="tf">F</th><th class="tju">J</th><th class="tl">L</th></tr></thead><tbody>';
+  jug.forEach(p=>{
+    h+='<tr><td class="tj">'+esc(p.nombre)+'</td>'+
+       '<td class="c-ok">'+(p.OK||'')+'</td>'+
+       '<td class="c-f">'+(p.F||'')+'</td>'+
+       '<td class="c-j">'+(p.J||'')+'</td>'+
+       '<td class="c-l">'+(p.L||'')+'</td></tr>';
+  });
+  h+='</tbody></table>';
+
+  // ── Estado / alertas por gravedad ──
+  const urg=jug.filter(p=>p.F>=2 && p.J===0);
+  const mod=jug.filter(p=>p.F>=2 && p.J>=1);
+  h+='<div class="estado">';
+  if(urg.length){
+    h+='<div class="est-h est-urg">&#9888; Alertas — comunicarse URGENTEMENTE</div>';
+    urg.forEach(p=>{ h+='<div class="est-card urg">&#9888; <b>'+esc(p.nombre)+'</b> — ALERTA — '+p.F+' inasistencias — COMUNICARSE URGENTEMENTE</div>'; });
+  }
+  if(mod.length){
+    h+='<div class="est-h est-mod">Comunicarse con el jugador</div>';
+    mod.forEach(p=>{ h+='<div class="est-card mod"><b>'+esc(p.nombre)+'</b> — '+p.F+' inasistencias ('+p.J+' justificada'+(p.J>1?'s':'')+') — no es grave, pero comunicarse con el jugador</div>'; });
+  }
+  if(!urg.length && !mod.length){
+    h+='<div class="est-card okc">&#10003; Todos los jugadores asisten con normalidad.</div>';
+  } else {
+    h+='<div class="est-note">El resto de los jugadores asiste con normalidad.</div>';
+  }
+  h+='</div>';
+
+  // ── Listas desplegables F / J / L ──
+  h+=collap('F','No asistieron','#ff4d5e', jug.filter(p=>p.F>0).map(p=>({n:p.nombre,c:p.F,alerta:p.F>=2})));
+  h+=collap('J','Justificados','#ffb020', jug.filter(p=>p.J>0).map(p=>({n:p.nombre,c:p.J})));
+  h+=collap('L','Lesionados','#64c8ff', jug.filter(p=>p.L>0).map(p=>({n:p.nombre,c:p.L})));
+
   h+='</div>';
   $('result').innerHTML=h;
   drawChart(c);
 }
-function listaColor(titulo,color,items){
-  if(!items.length) return '';
+let _cid=0;
+function collap(letra,titulo,color,items){
+  const id='cp'+(_cid++);
   items.sort((a,b)=>a.n.localeCompare(b.n,'es'));
-  let h='<div class="clist" style="border-left-color:'+color+'"><div class="clh" style="color:'+color+'"><span class="dot" style="background:'+color+'"></span>'+titulo+' ('+items.length+')</div><ul>';
-  h+=items.map(p=>'<li><span>'+(p.alerta?'&#9888; ':'')+esc(p.n)+'</span><span class="cnt" style="color:'+color+'">'+p.c+'</span></li>').join('');
-  h+='</ul></div>';
-  return h;
+  const body=items.length
+    ? '<ul>'+items.map(p=>'<li><span>'+(p.alerta?'&#9888; ':'')+esc(p.n)+'</span><span class="cnt" style="color:'+color+'">'+p.c+'</span></li>').join('')+'</ul>'
+    : '<div class="collap-empty">Sin jugadores.</div>';
+  return '<div class="collap"><div class="collap-h" style="border-left-color:'+color+'" onclick="toggleCollap(\''+id+'\')">'+
+         '<span class="collap-badge" style="background:'+color+'">'+letra+'</span> '+titulo+' ('+items.length+')'+
+         '<span class="collap-arrow" id="'+id+'-a">&#9656;</span></div>'+
+         '<div class="collap-body" id="'+id+'" style="display:none">'+body+'</div></div>';
+}
+function toggleCollap(id){
+  const b=document.getElementById(id), a=document.getElementById(id+'-a');
+  const abrir = b.style.display==='none';
+  b.style.display = abrir?'block':'none';
+  if(a) a.innerHTML = abrir?'&#9662;':'&#9656;';
 }
 function lg(color,label,val,p){
   return '<div class="lg"><span class="dot" style="background:'+color+'"></span>'+label+' <b>'+p+'% ('+val+')</b></div>';
@@ -241,8 +315,44 @@ $('btn-pdf').onclick=()=>{
     doc.text(r[0]+': '+r[1]+'  ('+pct(r[1],total)+'%)',M+68,ty); ty+=8;
   });
   y=Math.max(y+64,ty)+6;
-  doc.setDrawColor(220); doc.line(M,y,W-M,y); y+=8;
-  const jug=c.jugadores||[];
+  const jug=(c.jugadores||[]).slice().sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+
+  // Tabla jugador × OK/F/J/L
+  doc.autoTable({
+    startY:y,
+    head:[['JUGADOR','OK','F','J','L']],
+    body:jug.map(p=>[p.nombre, p.OK||'', p.F||'', p.J||'', p.L||'']),
+    theme:'grid', styles:{fontSize:9,cellPadding:1.6},
+    headStyles:{fillColor:[38,38,45],textColor:255,halign:'center'},
+    columnStyles:{0:{halign:'left'},1:{halign:'center',textColor:[39,160,106]},2:{halign:'center',textColor:[210,50,70]},3:{halign:'center',textColor:[200,140,20]},4:{halign:'center',textColor:[50,150,210]}}
+  });
+  y=doc.lastAutoTable.finalY+8;
+
+  // Alertas por gravedad
+  var urg=jug.filter(p=>p.F>=2 && p.J===0);
+  var mod=jug.filter(p=>p.F>=2 && p.J>=1);
+  if(y>255){ doc.addPage(); y=20; }
+  if(urg.length){
+    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(210,50,70);
+    doc.text('ALERTAS — COMUNICARSE URGENTEMENTE',M,y); y+=6;
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(40);
+    urg.forEach(p=>{ if(y>285){doc.addPage();y=20;} doc.text('!  '+p.nombre+' — '+p.F+' inasistencias — COMUNICARSE URGENTEMENTE',M+2,y); y+=5.5; });
+    y+=3;
+  }
+  if(mod.length){
+    if(y>270){ doc.addPage(); y=20; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(200,140,20);
+    doc.text('COMUNICARSE CON EL JUGADOR',M,y); y+=6;
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(40);
+    mod.forEach(p=>{ if(y>285){doc.addPage();y=20;} doc.text('-  '+p.nombre+' — '+p.F+' inasistencias ('+p.J+' justificada) — comunicarse',M+2,y); y+=5.5; });
+    y+=3;
+  }
+  if(!urg.length && !mod.length){
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(39,160,106);
+    doc.text('Todos los jugadores asisten con normalidad.',M,y); y+=8;
+  }
+
+  // Listas F / J / L
   function grupo(titulo,rgb,items){
     if(!items.length) return;
     if(y>268){ doc.addPage(); y=20; }
@@ -252,10 +362,10 @@ $('btn-pdf').onclick=()=>{
     items.sort((a,b)=>a.n.localeCompare(b.n,'es')).forEach(p=>{ if(y>285){doc.addPage();y=20;} doc.text('•  '+p.n+'  ('+p.c+')',M+2,y); y+=5.5; });
     y+=4;
   }
-  grupo('ASISTIERON',[39,160,106], jug.filter(p=>p.OK>0).map(p=>({n:p.nombre,c:p.OK})));
-  grupo('NO ASISTIERON',[210,50,70], jug.filter(p=>p.F>0).map(p=>({n:p.nombre,c:p.F})));
-  grupo('JUSTIFICADOS',[200,140,20], jug.filter(p=>p.J>0).map(p=>({n:p.nombre,c:p.J})));
-  grupo('LESIONADOS',[50,150,210], jug.filter(p=>p.L>0).map(p=>({n:p.nombre,c:p.L})));
+  grupo('F — NO ASISTIERON',[210,50,70], jug.filter(p=>p.F>0).map(p=>({n:p.nombre,c:p.F})));
+  grupo('J — JUSTIFICADOS',[200,140,20], jug.filter(p=>p.J>0).map(p=>({n:p.nombre,c:p.J})));
+  grupo('L — LESIONADOS',[50,150,210], jug.filter(p=>p.L>0).map(p=>({n:p.nombre,c:p.L})));
+
   doc.save('reporte-'+CAT.sede+'-'+CAT.cat+'-'+rep.desde+'.pdf');
 };
 
