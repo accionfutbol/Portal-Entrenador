@@ -261,7 +261,7 @@ function render(c, rep){
   // ── Listas desplegables F / J / L ──
   h+=collap('F','No asistieron','#ff4d5e', jug.filter(p=>p.F>0).map(p=>({n:p.nombre,c:p.F,alerta:p.F>=2})));
   h+=collap('J','Justificados','#ffb020', jug.filter(p=>p.J>0).map(p=>({n:p.nombre,c:p.J,motivos:p.motivos||[]})));
-  h+=collap('L','Lesionados','#64c8ff', jug.filter(p=>p.L>0).map(p=>({n:p.nombre,c:p.L})));
+  h+=collap('L','Lesionados','#64c8ff', jug.filter(p=>p.L>0).map(p=>({n:p.nombre,c:p.L,motivos:p.motivosL||[]})));
 
   h+='</div>';
   $('result').innerHTML=h;
@@ -377,7 +377,7 @@ $('btn-pdf').onclick=()=>{
   }
   grupo('F — NO ASISTIERON',[210,50,70], jug.filter(p=>p.F>0).map(p=>({n:p.nombre,c:p.F})));
   grupo('J — JUSTIFICADOS',[200,140,20], jug.filter(p=>p.J>0).map(p=>({n:p.nombre,c:p.J,m:[...new Set(p.motivos||[])]})));
-  grupo('L — LESIONADOS',[50,150,210], jug.filter(p=>p.L>0).map(p=>({n:p.nombre,c:p.L})));
+  grupo('L — LESIONADOS',[50,150,210], jug.filter(p=>p.L>0).map(p=>({n:p.nombre,c:p.L,m:[...new Set(p.motivosL||[])]})));
 
   doc.save('reporte-'+CAT.sede+'-'+CAT.cat+'-'+rep.desde+'.pdf');
 };
