@@ -213,6 +213,32 @@ $('btn-generar').onclick=async()=>{
 
 function pct(n,total){ return total? Math.round(n/total*100) : 0; }
 
+let REP_SORT={campo:null,dir:'desc'};
+function filasRep(jug){
+  return (jug||[]).map(p=>'<tr><td class="tj">'+esc(p.nombre)+'</td>'+
+    '<td class="c-ok">'+(p.OK||'')+'</td>'+
+    '<td class="c-f">'+(p.F||'')+'</td>'+
+    '<td class="c-j">'+(p.J||'')+'</td>'+
+    '<td class="c-l">'+(p.L||'')+'</td></tr>').join('');
+}
+function sortRep(campo){
+  if(!CAT||!CAT.c) return;
+  if(REP_SORT.campo===campo) REP_SORT.dir=(REP_SORT.dir==='desc'?'asc':'desc');
+  else { REP_SORT.campo=campo; REP_SORT.dir='desc'; }
+  const dir=REP_SORT.dir;
+  const jug=(CAT.c.jugadores||[]).slice().sort((a,b)=>{
+    let d=(a[campo]||0)-(b[campo]||0);
+    d = dir==='desc' ? -d : d;
+    return d!==0 ? d : a.nombre.localeCompare(b.nombre,'es');
+  });
+  const body=document.getElementById('rtab-body');
+  if(body) body.innerHTML=filasRep(jug);
+  ['OK','F','J','L'].forEach(k=>{
+    const el=document.getElementById('arr-'+k);
+    if(el) el.textContent=(REP_SORT.campo===k)?(dir==='desc'?' ▼':' ▲'):'';
+  });
+}
+
 function render(c, rep){
   if(c.error){ $('result').innerHTML='<div class="repcard"><div class="rt">'+esc(c.sede)+' · '+esc(c.categoria)+'</div><div class="okmsg">'+esc(c.error)+'</div></div>'; return; }
   const total=c.OK+c.F+c.J+c.L;
@@ -228,15 +254,15 @@ function render(c, rep){
      lg('var(--blue)','Lesionado (L)',c.L,pct(c.L,total))+
      '</div>';
 
-  // ── Tabla jugador × OK/F/J/L ──
-  h+='<table class="rtab"><thead><tr><th class="tj">JUGADOR</th><th class="tok">OK</th><th class="tf">F</th><th class="tju">J</th><th class="tl">L</th></tr></thead><tbody>';
-  jug.forEach(p=>{
-    h+='<tr><td class="tj">'+esc(p.nombre)+'</td>'+
-       '<td class="c-ok">'+(p.OK||'')+'</td>'+
-       '<td class="c-f">'+(p.F||'')+'</td>'+
-       '<td class="c-j">'+(p.J||'')+'</td>'+
-       '<td class="c-l">'+(p.L||'')+'</td></tr>';
-  });
+  // ── Tabla jugador × OK/F/J/L (encabezados ordenables) ──
+  REP_SORT={campo:null,dir:'desc'};
+  h+='<table class="rtab"><thead><tr><th class="tj">JUGADOR</th>'+
+     '<th class="tok" style="cursor:pointer;user-select:none" onclick="sortRep(\'OK\')">OK<span class="arr" id="arr-OK"></span></th>'+
+     '<th class="tf" style="cursor:pointer;user-select:none" onclick="sortRep(\'F\')">F<span class="arr" id="arr-F"></span></th>'+
+     '<th class="tju" style="cursor:pointer;user-select:none" onclick="sortRep(\'J\')">J<span class="arr" id="arr-J"></span></th>'+
+     '<th class="tl" style="cursor:pointer;user-select:none" onclick="sortRep(\'L\')">L<span class="arr" id="arr-L"></span></th>'+
+     '</tr></thead><tbody id="rtab-body">';
+  h+=filasRep(jug);
   h+='</tbody></table>';
 
   // ── Estado / alertas por gravedad ──
