@@ -48,6 +48,17 @@ input:focus,select:focus{border-color:var(--pink)}
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 20px;font-size:14px;z-index:60;opacity:0;pointer-events:none;transition:.25s}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .loader{text-align:center;color:var(--muted);padding:30px;font-size:14px}
+.mk-mot{border:1px solid var(--warn);background:rgba(255,176,32,.12);color:var(--warn);border-radius:9px;padding:0 10px;height:38px;font-size:15px;cursor:pointer;margin-left:2px}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:70;padding:18px}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:440px;width:100%;padding:20px}
+.modal-h{font-family:'Oswald';font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.04em;color:var(--warn)}
+.modal-name{font-size:15px;font-weight:600;margin:2px 0 14px}
+.modal-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:12px 0 5px}
+.modal-form{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.4;min-height:20px}
+.modal-ta{width:100%;box-sizing:border-box;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ink);font-family:inherit;resize:vertical;min-height:70px}
+.modal-note{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4}
+.modal-actions{display:flex;gap:10px;margin-top:16px}
+.modal-actions .btn{width:auto;flex:1;padding:12px}
 </style>
 </head>
 <body>
@@ -101,6 +112,23 @@ input:focus,select:focus{border-color:var(--pink)}
 <div class="savebar hidden" id="savebar"><div class="inner">
   <button class="btn" id="btn-guardar">Guardar asistencia</button>
 </div></div>
+
+<!-- MODAL MOTIVO -->
+<div class="modal-bg hidden" id="mot-modal">
+  <div class="modal">
+    <div class="modal-h">Motivo de la justificación</div>
+    <div class="modal-name" id="mot-nombre"></div>
+    <div class="modal-lbl">Justificación del apoderado (formulario)</div>
+    <div class="modal-form" id="mot-form">—</div>
+    <div class="modal-lbl">Motivo informado al entrenador (privado)</div>
+    <textarea id="mot-text" class="modal-ta" placeholder="Ej: el apoderado avisó por WhatsApp que faltó por motivos de salud."></textarea>
+    <div class="modal-note">Usa este campo cuando el jugador no llenó el formulario pero te informó el motivo en privado. Se guarda como nota en la planilla.</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="mot-cerrar">Cerrar</button>
+      <button class="btn" id="mot-guardar">Guardar motivo</button>
+    </div>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -208,6 +236,7 @@ function renderRoster(){
     const marca=(p.marca||'').toUpperCase();
     html+='<div class="player"><div class="pname"><div class="pn">'+esc(p.nombre)+'</div>'+(p.rut?'<div class="prut">'+esc(p.rut)+'</div>':'')+'</div><div class="marks">';
     MARCAS.forEach(m=>{ html+='<button class="mk '+m.toLowerCase()+(marca===m?' on':'')+'" data-i="'+i+'" data-m="'+m+'">'+m+'</button>'; });
+    if(marca==='J') html+='<button class="mk-mot" data-i="'+i+'" title="Ver / escribir motivo">'+(p.nota?'💬✓':'💬')+'</button>';
     html+='</div></div>';
   });
   $('roster').innerHTML=html;
@@ -215,8 +244,53 @@ function renderRoster(){
   btns.forEach(b=>{
     b.onclick=()=>{ const i=+b.dataset.i, m=b.dataset.m; ROSTER[i].marca=(ROSTER[i].marca===m?'':m); renderRoster(); };
   });
+  $('roster').querySelectorAll('.mk-mot').forEach(b=>{
+    b.onclick=()=>abrirMotivo(+b.dataset.i);
+  });
   updateSummary();
 }
+
+let MOT_I=null;
+async function abrirMotivo(i){
+  const p=ROSTER[i];
+  const val=$('sedecat').value; if(!val){ toast('Elige sede y categoria'); return; }
+  const parts=val.split('||'), sede=parts[0], cat=parts[1];
+  const fecha=$('fecha').value||todayStr();
+  MOT_I=i;
+  $('mot-nombre').textContent=p.nombre;
+  $('mot-form').textContent='Cargando...';
+  $('mot-text').value = (p.nota!==undefined) ? p.nota : '';
+  $('mot-modal').classList.remove('hidden');
+  try{
+    const t=await token();
+    const q='?action=motivo&sede='+encodeURIComponent(sede)+'&cat='+encodeURIComponent(cat)+'&fecha='+encodeURIComponent(fecha)+'&rut='+encodeURIComponent(p.rut||'')+'&idToken='+encodeURIComponent(t);
+    const res=await fetch(API_ASIS+q);
+    const data=await res.json();
+    if(data.error){ $('mot-form').textContent='(no se pudo cargar: '+data.error+')'; return; }
+    $('mot-form').textContent = data.formulario ? data.formulario : '— Sin justificación del apoderado —';
+    if(p.nota===undefined && data.entrenador) $('mot-text').value=data.entrenador;
+  }catch(e){ $('mot-form').textContent='(error de conexión)'; }
+}
+async function guardarMotivo(){
+  if(MOT_I==null) return;
+  const p=ROSTER[MOT_I];
+  const texto=$('mot-text').value.trim();
+  const val=$('sedecat').value, fecha=$('fecha').value||todayStr();
+  const parts=val.split('||'), sede=parts[0], cat=parts[1];
+  p.marca='J'; p.nota=texto;
+  $('mot-guardar').disabled=true; $('mot-guardar').textContent='Guardando...';
+  try{
+    const t=await token();
+    const res=await fetch(API_ASIS,{method:'POST',body:JSON.stringify({action:'save',idToken:t,sede:sede,cat:cat,fecha:fecha,marcas:[{row:p.row,marca:'J',nota:texto}]})});
+    const data=await res.json();
+    if(data.error){ toast('Error: '+data.error); }
+    else{ toast('Motivo guardado'); }
+  }catch(e){ toast('No se pudo guardar el motivo.'); }
+  $('mot-guardar').disabled=false; $('mot-guardar').textContent='Guardar motivo';
+  $('mot-modal').classList.add('hidden'); MOT_I=null; renderRoster();
+}
+$('mot-guardar').onclick=guardarMotivo;
+$('mot-cerrar').onclick=()=>{ $('mot-modal').classList.add('hidden'); MOT_I=null; };
 function updateSummary(){
   const c={OK:0,F:0,J:0,L:0};
   ROSTER.forEach(p=>{ const m=(p.marca||'').toUpperCase(); if(m in c) c[m]++; });
@@ -231,7 +305,7 @@ $('btn-guardar').onclick = async ()=>{
   const val=$('sedecat').value, fecha=$('fecha').value||todayStr();
   if(!val){ toast('Elige sede y categoria'); return; }
   const parts=val.split('||'), sede=parts[0], cat=parts[1];
-  const marcas=ROSTER.filter(p=>p.marca).map(p=>({row:p.row,marca:p.marca}));
+  const marcas=ROSTER.filter(p=>p.marca).map(p=>{const o={row:p.row,marca:p.marca}; if(p.nota!==undefined)o.nota=p.nota; return o;});
   if(!marcas.length){ toast('No hay marcas para guardar'); return; }
   $('btn-guardar').disabled=true; $('btn-guardar').textContent='Guardando...';
   try{
