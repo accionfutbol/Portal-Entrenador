@@ -57,6 +57,7 @@ input:focus,select:focus{border-color:var(--pink)}
 .modal-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:12px 0 5px}
 .modal-form{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.4;min-height:20px}
 .modal-ta{width:100%;box-sizing:border-box;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ink);font-family:inherit;resize:vertical;min-height:70px}
+.modal-sel{width:100%;box-sizing:border-box;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:14px;color:var(--ink);font-family:inherit}
 .modal-note{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4}
 .modal-actions{display:flex;gap:10px;margin-top:16px}
 .modal-actions .btn{width:auto;flex:1;padding:12px}
@@ -119,11 +120,21 @@ input:focus,select:focus{border-color:var(--pink)}
   <div class="modal">
     <div class="modal-h">Motivo de la justificación</div>
     <div class="modal-name" id="mot-nombre"></div>
-    <div class="modal-lbl">Justificación del apoderado (formulario)</div>
+    <div class="modal-lbl">Justificación del Jugador</div>
     <div class="modal-form" id="mot-form">—</div>
     <div class="modal-lbl">Motivo informado al entrenador (privado)</div>
-    <textarea id="mot-text" class="modal-ta" placeholder="Ej: el apoderado avisó por WhatsApp que faltó por motivos de salud."></textarea>
-    <div class="modal-note">Usa este campo cuando el jugador no llenó el formulario pero te informó el motivo en privado. Se guarda como nota en la planilla.</div>
+    <select id="mot-sel" class="modal-sel">
+      <option value="">— Selecciona el motivo —</option>
+      <option>ESTOY ENFERMO (RESFRÍO, GRIPE, FIEBRE, DOLOR ESTOMACAL ETC)</option>
+      <option>ESTOY LESIONADO O TENGO UNA MOLESTIA FÍSICA</option>
+      <option>TENGO QUE ESTUDIAR</option>
+      <option>PROBLEMAS POR TENER OTRA ACTIVIDAD ESPECÍFICA</option>
+      <option>PROBLEMAS FAMILIARES</option>
+      <option>PROBLEMAS DE TRANSPORTE (NO TENGO QUIEN ME LLEVE)</option>
+      <option>PROBLEMAS POR LA LLUVIA</option>
+      <option>VACACIONES</option>
+    </select>
+    <div class="modal-note">Usa este campo cuando el jugador no llenó el formulario pero te informó el motivo en privado. Queda registrado en la planilla de justificaciones (columna "Informado por el entrenador").</div>
     <div class="modal-actions">
       <button class="btn btn-ghost" id="mot-cerrar">Cerrar</button>
       <button class="btn" id="mot-guardar">Guardar motivo</button>
@@ -237,7 +248,7 @@ function renderRoster(){
     const marca=(p.marca||'').toUpperCase();
     html+='<div class="player"><div class="pname"><div class="pn">'+esc(p.nombre)+'</div>'+(p.rut?'<div class="prut">'+esc(p.rut)+'</div>':'')+'</div><div class="marks">';
     MARCAS.forEach(m=>{ html+='<button class="mk '+m.toLowerCase()+(marca===m?' on':'')+'" data-i="'+i+'" data-m="'+m+'">'+m+'</button>'; });
-    if(marca==='J') html+='<button class="mk-mot" data-i="'+i+'" title="Ver / escribir motivo">'+(p.nota?'💬✓':'💬')+'</button>';
+    if(marca==='J') html+='<button class="mk-mot" data-i="'+i+'" title="Ver / escribir motivo">'+(p.opcion?'💬✓':'💬')+'</button>';
     html+='</div></div>';
   });
   $('roster').innerHTML=html;
@@ -260,7 +271,7 @@ async function abrirMotivo(i){
   MOT_I=i;
   $('mot-nombre').textContent=p.nombre;
   $('mot-form').textContent='Cargando...';
-  $('mot-text').value = (p.nota!==undefined) ? p.nota : '';
+  $('mot-sel').value = (p.opcion!==undefined) ? p.opcion : '';
   $('mot-modal').classList.remove('hidden');
   try{
     const t=await token();
@@ -268,21 +279,22 @@ async function abrirMotivo(i){
     const res=await fetch(API_ASIS+q);
     const data=await res.json();
     if(data.error){ $('mot-form').textContent='(no se pudo cargar: '+data.error+')'; return; }
-    $('mot-form').textContent = data.formulario ? data.formulario : '— Sin justificación del apoderado —';
-    if(p.nota===undefined && data.entrenador) $('mot-text').value=data.entrenador;
+    $('mot-form').textContent = data.formulario ? data.formulario : '— Sin justificación del jugador —';
+    if(p.opcion===undefined && data.entrenador) $('mot-sel').value=data.entrenador;
   }catch(e){ $('mot-form').textContent='(error de conexión)'; }
 }
 async function guardarMotivo(){
   if(MOT_I==null) return;
   const p=ROSTER[MOT_I];
-  const texto=$('mot-text').value.trim();
+  const opcion=$('mot-sel').value;
+  if(!opcion){ toast('Selecciona un motivo'); return; }
   const val=$('sedecat').value, fecha=$('fecha').value||todayStr();
   const parts=val.split('||'), sede=parts[0], cat=parts[1];
-  p.marca='J'; p.nota=texto;
+  p.marca='J'; p.opcion=opcion;
   $('mot-guardar').disabled=true; $('mot-guardar').textContent='Guardando...';
   try{
     const t=await token();
-    const res=await fetch(API_ASIS,{method:'POST',body:JSON.stringify({action:'save',idToken:t,sede:sede,cat:cat,fecha:fecha,marcas:[{row:p.row,marca:'J',nota:texto}]})});
+    const res=await fetch(API_ASIS,{method:'POST',body:JSON.stringify({action:'motivoent',idToken:t,sede:sede,cat:cat,fecha:fecha,rut:p.rut,row:p.row,opcion:opcion})});
     const data=await res.json();
     if(data.error){ toast('Error: '+data.error); }
     else{ toast('Motivo guardado'); }
@@ -306,7 +318,7 @@ $('btn-guardar').onclick = async ()=>{
   const val=$('sedecat').value, fecha=$('fecha').value||todayStr();
   if(!val){ toast('Elige sede y categoria'); return; }
   const parts=val.split('||'), sede=parts[0], cat=parts[1];
-  const marcas=ROSTER.filter(p=>p.marca).map(p=>{const o={row:p.row,marca:p.marca}; if(p.nota!==undefined)o.nota=p.nota; return o;});
+  const marcas=ROSTER.filter(p=>p.marca).map(p=>({row:p.row,marca:p.marca}));
   if(!marcas.length){ toast('No hay marcas para guardar'); return; }
   $('btn-guardar').disabled=true; $('btn-guardar').textContent='Guardando...';
   try{
