@@ -49,6 +49,7 @@ input:focus,select:focus{border-color:var(--pink)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .loader{text-align:center;color:var(--muted);padding:30px;font-size:14px}
 .mk-mot{border:1px solid var(--warn);background:rgba(255,176,32,.12);color:var(--warn);border-radius:9px;padding:0 10px;height:38px;font-size:15px;cursor:pointer;margin-left:2px}
+.mk-wa{display:inline-flex;align-items:center;gap:4px;border:1px solid #25D366;background:rgba(37,211,102,.12);color:#25D366;border-radius:9px;padding:0 10px;height:38px;font-size:12px;font-weight:600;text-decoration:none;margin-left:2px;white-space:nowrap}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:70;padding:18px}
 .modal-bg.hidden{display:none}
 .modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:440px;width:100%;padding:20px}
@@ -250,6 +251,12 @@ function renderRoster(){
     html+='<div class="player"><div class="pname"><div class="pn">'+esc(p.nombre)+'</div>'+(p.rut?'<div class="prut">'+esc(p.rut)+'</div>':'')+'</div><div class="marks">';
     MARCAS.forEach(m=>{ html+='<button class="mk '+m.toLowerCase()+(marca===m?' on':'')+'" data-i="'+i+'" data-m="'+m+'">'+m+'</button>'; });
     if(marca==='J') html+='<button class="mk-mot" data-i="'+i+'" title="Ver / escribir motivo">'+(p.opcion?'💬✓':'💬')+'</button>';
+    if(marca==='F'){
+      const msg=encodeURIComponent('Buenas Tardes. Quisiéramos saber por qué '+p.nombre+' no asistió al entrenamiento hoy.');
+      const tj=waNum(p.telJug), ta=waNum(p.telApo);
+      if(tj) html+='<a class="mk-wa" href="https://wa.me/'+tj+'?text='+msg+'" target="_blank" rel="noopener" title="WhatsApp al jugador">📱 Jugador</a>';
+      if(ta) html+='<a class="mk-wa" href="https://wa.me/'+ta+'?text='+msg+'" target="_blank" rel="noopener" title="WhatsApp al apoderado">📱 Apoderado</a>';
+    }
     html+='</div></div>';
   });
   $('roster').innerHTML=html;
@@ -333,6 +340,14 @@ $('btn-guardar').onclick = async ()=>{
 };
 
 function esc(s){ return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function waNum(raw){
+  if(!raw) return '';
+  let s=String(raw).split('/')[0];      // si hay dos números separados por "/", toma el primero
+  s=s.replace(/\D/g,'');                 // solo dígitos
+  if(!s) return '';
+  if(s.indexOf('56')!==0) s='56'+s;      // asegura el código de país de Chile (+56)
+  return s;
+}
 </script>
 </body>
 </html>
