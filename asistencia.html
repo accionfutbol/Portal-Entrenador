@@ -29,11 +29,13 @@ input:focus,select:focus{border-color:var(--pink)}
 .backhome{position:fixed;top:14px;left:14px;background:var(--pink);border:none;border-radius:8px;padding:7px 13px;font-size:11px;font-family:'Oswald';font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#fff;cursor:pointer;z-index:50;text-decoration:none}
 .backhome:hover{filter:brightness(1.1)}
 .err{background:rgba(255,77,94,.1);border:1px solid rgba(255,77,94,.3);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--red);margin-top:10px;display:none}
-.player{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.player{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
 .player .pname{flex:1;min-width:0}
 .player .pn{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .player .prut{font-size:11px;color:var(--muted2)}
 .marks{display:flex;gap:5px;flex-shrink:0}
+.pwa{flex-basis:100%;width:100%;display:flex;gap:8px;margin-top:2px}
+.pwa .mk-wa{flex:1;justify-content:center;height:40px;font-size:13px}
 .mk{width:38px;height:38px;border-radius:9px;border:1.5px solid var(--line);background:var(--panel2);color:var(--muted);font-family:'Oswald';font-weight:700;font-size:14px;cursor:pointer;transition:.12s}
 .mk.ok.on{background:var(--ok);border-color:var(--ok);color:#04231a}
 .mk.f.on{background:var(--red);border-color:var(--red);color:#2a0509}
@@ -133,7 +135,6 @@ input:focus,select:focus{border-color:var(--pink)}
       <option>PROBLEMAS FAMILIARES</option>
       <option>PROBLEMAS DE TRANSPORTE (NO TENGO QUIEN ME LLEVE)</option>
       <option>PROBLEMAS POR LA LLUVIA</option>
-      <option>ESTOY EN PRUEBA EN UN EQUIPO</option>
       <option>VACACIONES</option>
     </select>
     <div class="modal-note">Usa este campo cuando el jugador no llenó el formulario pero te informó el motivo en privado. Queda registrado en la planilla de justificaciones (columna "Informado por el entrenador").</div>
@@ -251,13 +252,16 @@ function renderRoster(){
     html+='<div class="player"><div class="pname"><div class="pn">'+esc(p.nombre)+'</div>'+(p.rut?'<div class="prut">'+esc(p.rut)+'</div>':'')+'</div><div class="marks">';
     MARCAS.forEach(m=>{ html+='<button class="mk '+m.toLowerCase()+(marca===m?' on':'')+'" data-i="'+i+'" data-m="'+m+'">'+m+'</button>'; });
     if(marca==='J') html+='<button class="mk-mot" data-i="'+i+'" title="Ver / escribir motivo">'+(p.opcion?'💬✓':'💬')+'</button>';
+    html+='</div>';
     if(marca==='F'){
       const msg=encodeURIComponent('Buenas Tardes. Quisiéramos saber por qué '+p.nombre+' no asistió al entrenamiento hoy.');
       const tj=waNum(p.telJug), ta=waNum(p.telApo);
-      if(tj) html+='<a class="mk-wa" href="https://wa.me/'+tj+'?text='+msg+'" target="_blank" rel="noopener" title="WhatsApp al jugador">📱 Jugador</a>';
-      if(ta) html+='<a class="mk-wa" href="https://wa.me/'+ta+'?text='+msg+'" target="_blank" rel="noopener" title="WhatsApp al apoderado">📱 Apoderado</a>';
+      let wa='';
+      if(tj) wa+='<a class="mk-wa" href="https://wa.me/'+tj+'?text='+msg+'" target="_blank" rel="noopener" title="WhatsApp al jugador">📱 Jugador</a>';
+      if(ta) wa+='<a class="mk-wa" href="https://wa.me/'+ta+'?text='+msg+'" target="_blank" rel="noopener" title="WhatsApp al apoderado">📱 Apoderado</a>';
+      if(wa) html+='<div class="pwa">'+wa+'</div>';
     }
-    html+='</div></div>';
+    html+='</div>';
   });
   $('roster').innerHTML=html;
   const btns=$('roster').querySelectorAll('.mk');
