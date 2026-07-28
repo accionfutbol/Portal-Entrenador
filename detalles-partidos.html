@@ -146,12 +146,15 @@ fbAuth.onAuthStateChanged(async u=>{
 async function token(){ const u=fbAuth.currentUser; if(!u) throw new Error('Sesión no iniciada'); return await u.getIdToken(); }
 
 async function cargarTodos(){
+  $('app-err').textContent='';
   try{
     const t=await token();
     const res=await fetch(API_ASIS+'?action=todos&idToken='+encodeURIComponent(t));
     const data=await res.json();
-    if(data.jugadores) TODOS=data.jugadores;
-  }catch(e){}
+    if(data.error){ $('app-err').textContent='No se pudo cargar la lista: '+data.error; return; }
+    TODOS=data.jugadores||[];
+    if(!TODOS.length) $('app-err').textContent='La lista de jugadores llegó vacía. ¿Re-desplegaste el backend?';
+  }catch(e){ $('app-err').textContent='Error cargando jugadores: '+(e.message||e); }
 }
 
 /* Autocompletar */
