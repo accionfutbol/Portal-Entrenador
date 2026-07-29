@@ -29,14 +29,14 @@ input:focus,select:focus{border-color:var(--pink)}
 .backhome{position:fixed;top:14px;left:14px;background:var(--pink);border:none;border-radius:8px;padding:7px 13px;font-size:11px;font-family:'Oswald';font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#fff;cursor:pointer;z-index:50;text-decoration:none}
 .backhome:hover{filter:brightness(1.1)}
 .err{background:rgba(255,77,94,.1);border:1px solid rgba(255,77,94,.3);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--red);margin-top:10px;display:none}
-.player{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
-.player .pname{flex:1;min-width:0}
-.player .pn{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.player .prut{font-size:11px;color:var(--muted2)}
-.marks{display:flex;gap:5px;flex-shrink:0}
+.player{display:flex;flex-direction:column;align-items:stretch;gap:9px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:8px}
+.player .pname{width:100%}
+.player .pn{font-weight:600;font-size:15px;line-height:1.25}
+.player .prut{font-size:11px;color:var(--muted2);margin-top:1px}
+.marks{display:flex;gap:6px;width:100%}
 .pwa{flex-basis:100%;width:100%;display:flex;gap:8px;margin-top:2px}
 .pwa .mk-wa{flex:1;justify-content:center;height:40px;font-size:13px}
-.mk{width:38px;height:38px;border-radius:9px;border:1.5px solid var(--line);background:var(--panel2);color:var(--muted);font-family:'Oswald';font-weight:700;font-size:14px;cursor:pointer;transition:.12s}
+.mk{flex:1;min-width:0;height:44px;border-radius:9px;border:1.5px solid var(--line);background:var(--panel2);color:var(--muted);font-family:'Oswald';font-weight:700;font-size:15px;cursor:pointer;transition:.12s}
 .mk.ok.on{background:var(--ok);border-color:var(--ok);color:#04231a}
 .mk.f.on{background:var(--red);border-color:var(--red);color:#2a0509}
 .mk.j.on{background:var(--warn);border-color:var(--warn);color:#2a1f04}
@@ -50,9 +50,9 @@ input:focus,select:focus{border-color:var(--pink)}
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 20px;font-size:14px;z-index:60;opacity:0;pointer-events:none;transition:.25s}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .loader{text-align:center;color:var(--muted);padding:30px;font-size:14px}
-.mk-mot{border:1px solid var(--warn);background:rgba(255,176,32,.12);color:var(--warn);border-radius:9px;padding:0 10px;height:38px;font-size:15px;cursor:pointer;margin-left:2px}
+.mk-mot{flex:1;min-width:0;border:1px solid var(--warn);background:rgba(255,176,32,.12);color:var(--warn);border-radius:9px;height:44px;font-size:16px;cursor:pointer}
 .mk-wa{display:inline-flex;align-items:center;gap:4px;border:1px solid #25D366;background:rgba(37,211,102,.12);color:#25D366;border-radius:9px;padding:0 10px;height:38px;font-size:12px;font-weight:600;text-decoration:none;margin-left:2px;white-space:nowrap}
-.mk-obs{border:1px solid #a97bff;background:rgba(169,123,255,.14);color:#c4a5ff;border-radius:9px;width:38px;height:38px;font-family:'Oswald';font-weight:700;font-size:15px;cursor:pointer;margin-left:2px}
+.mk-obs{flex:1;min-width:0;border:1px solid #a97bff;background:rgba(169,123,255,.14);color:#c4a5ff;border-radius:9px;height:44px;font-family:'Oswald';font-weight:700;font-size:15px;cursor:pointer}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:70;padding:18px}
 .modal-bg.hidden{display:none}
 .modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:440px;width:100%;padding:20px}
@@ -164,9 +164,7 @@ input:focus,select:focus{border-color:var(--pink)}
     <select id="obs-ent" class="modal-sel">
       <option value="">— Selecciona —</option>
       <option>GONZALO OPAZO</option>
-      <option>LUIS VARGAS</option>
       <option>AGUSTIN SQUELLA</option>
-      <option>JUAN PABLO LOPEZ</option>
       <option>SEBASTIAN MESSEN</option>
       <option>NICOLAS ARANCIBIA</option>
       <option>BRIANT FIGUEROA</option>
