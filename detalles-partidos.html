@@ -164,8 +164,16 @@ fbAuth.onAuthStateChanged(async u=>{
 });
 async function token(){ const u=fbAuth.currentUser; if(!u) throw new Error('Sesión no iniciada'); return await u.getIdToken(); }
 
+function setBusy(on){
+  $('search').disabled=on;
+  $('btn-buscar').disabled=on;
+  $('search').placeholder = on ? 'Cargando base de jugadores...' : 'Nombre o RUT del jugador...';
+  if(on){ $('result').innerHTML='<div class="loader">⏳ Cargando base de jugadores...</div>'; }
+  else if($('result').querySelector('.loader')){ $('result').innerHTML=''; }
+}
 async function cargarTodos(){
   $('app-err').textContent='';
+  setBusy(true);
   try{
     const t=await token();
     const res=await fetch(API_ASIS+'?action=todos&idToken='+encodeURIComponent(t));
@@ -174,6 +182,7 @@ async function cargarTodos(){
     TODOS=data.jugadores||[];
     if(!TODOS.length) $('app-err').textContent='La lista de jugadores llegó vacía. ¿Re-desplegaste el backend?';
   }catch(e){ $('app-err').textContent='Error cargando jugadores: '+(e.message||e); }
+  finally{ setBusy(false); }
 }
 
 /* Autocompletar */
