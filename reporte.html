@@ -88,6 +88,9 @@ input:focus,select:focus{border-color:var(--pink)}
 .collap-body li .linfo{flex:1;min-width:0}
 .collap-body li .mot{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45}
 .collap-empty{color:var(--muted);font-size:13px;padding:6px 0}
+.wa-row{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+.wa-btn{display:inline-flex;align-items:center;gap:5px;background:rgba(37,211,102,.14);border:1px solid #25D366;color:#25D366;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap}
+.wa-btn:hover{background:rgba(37,211,102,.22)}
 </style>
 </head>
 <body>
@@ -213,6 +216,16 @@ $('btn-generar').onclick=async()=>{
 
 function pct(n,total){ return total? Math.round(n/total*100) : 0; }
 
+function waNum(raw){ if(!raw) return ''; let s=String(raw).split('/')[0].replace(/\D/g,''); if(!s) return ''; if(s.indexOf('56')!==0) s='56'+s; return s; }
+function waBtns(p){
+  const msg=encodeURIComponent('Buenas Tardes. Notamos que '+p.nombre+' registra '+p.F+' inasistencias a los entrenamientos. Quisiéramos saber el motivo y cómo apoyarlo. — Acción Fútbol');
+  const tj=waNum(p.telJug), ta=waNum(p.telApo);
+  let w='';
+  if(tj) w+='<a class="wa-btn" href="https://wa.me/'+tj+'?text='+msg+'" target="_blank" rel="noopener">📱 Jugador</a>';
+  if(ta) w+='<a class="wa-btn" href="https://wa.me/'+ta+'?text='+msg+'" target="_blank" rel="noopener">📱 Apoderado</a>';
+  return w?'<div class="wa-row">'+w+'</div>':'';
+}
+
 let REP_SORT={campo:null,dir:'desc'};
 function filasRep(jug){
   return (jug||[]).map(p=>'<tr><td class="tj">'+esc(p.nombre)+'</td>'+
@@ -271,11 +284,11 @@ function render(c, rep){
   h+='<div class="estado">';
   if(urg.length){
     h+='<div class="est-h est-urg">&#9888; Alertas — comunicarse URGENTEMENTE</div>';
-    urg.forEach(p=>{ h+='<div class="est-card urg">&#9888; <b>'+esc(p.nombre)+'</b> — ALERTA — '+p.F+' inasistencias — COMUNICARSE URGENTEMENTE</div>'; });
+    urg.forEach(p=>{ h+='<div class="est-card urg">&#9888; <b>'+esc(p.nombre)+'</b> — ALERTA — '+p.F+' inasistencias — COMUNICARSE URGENTEMENTE'+waBtns(p)+'</div>'; });
   }
   if(mod.length){
     h+='<div class="est-h est-mod">Comunicarse con el jugador</div>';
-    mod.forEach(p=>{ h+='<div class="est-card mod"><b>'+esc(p.nombre)+'</b> — '+p.F+' inasistencias ('+p.J+' justificada'+(p.J>1?'s':'')+') — no es grave, pero comunicarse con el jugador</div>'; });
+    mod.forEach(p=>{ h+='<div class="est-card mod"><b>'+esc(p.nombre)+'</b> — '+p.F+' inasistencias ('+p.J+' justificada'+(p.J>1?'s':'')+') — no es grave, pero comunicarse con el jugador'+waBtns(p)+'</div>'; });
   }
   if(!urg.length && !mod.length){
     h+='<div class="est-card okc">&#10003; Todos los jugadores asisten con normalidad.</div>';
