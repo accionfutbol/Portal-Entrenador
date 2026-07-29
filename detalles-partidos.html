@@ -65,6 +65,25 @@ input{width:100%;box-sizing:border-box;background:var(--panel2);border:1px solid
 .savebar .inner{max-width:720px;margin:0 auto}
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 20px;font-size:14px;z-index:60;opacity:0;pointer-events:none;transition:.25s}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.report-head{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:6px}
+.report-head .nm{font-family:'Oswald';font-weight:700;font-size:22px;text-transform:uppercase}
+.report-head .pd{font-size:12px;color:var(--muted);margin-top:3px}
+.sec-title{font-family:'Oswald';font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.04em;color:var(--pink);margin:20px 0 10px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table.rt{border-collapse:collapse;width:100%;font-size:12px;min-width:660px}
+table.rt th{background:#0a0a0e;color:#fff;font-family:'Oswald';font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.03em;padding:9px 8px;text-align:center;white-space:nowrap}
+table.rt td{padding:8px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+table.rt tbody tr:nth-child(even) td{background:var(--panel)}
+table.rt td.l{text-align:left}
+.disc{width:100%;border-collapse:collapse;font-size:13px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.disc td,.disc th{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left}
+.disc th{font-size:11px;color:var(--muted);text-transform:uppercase;background:var(--panel)}
+.dot{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:7px;vertical-align:middle}
+.rango{margin-bottom:11px}
+.rango .rl{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;color:var(--ink)}
+.rbar{height:12px;background:var(--panel2);border-radius:6px;overflow:hidden}
+.rbar span{display:block;height:100%;background:var(--pink);border-radius:6px}
+.obs-ta{width:100%;box-sizing:border-box;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;color:var(--ink);font-family:inherit;line-height:1.5;min-height:96px;resize:vertical}
 </style>
 </head>
 <body>
@@ -204,63 +223,174 @@ function badge(estado){
 }
 function fdate(f){ return String(f||'').replace(/-/g,' - '); }
 
+function pdate(f){ const p=String(f||'').split('-'); return p.length===3? new Date(+p[2],+p[1]-1,+p[0]) : null; }
+function periodo(){
+  const ds=PARTIDOS.map(p=>pdate(p.fecha)).filter(Boolean).sort((a,b)=>a-b);
+  if(!ds.length) return '';
+  const f=d=>('0'+d.getDate()).slice(-2)+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+String(d.getFullYear()).slice(-2);
+  return f(ds[0])+' al '+f(ds[ds.length-1]);
+}
+function calc(){
+  let min=0,gol=0,ta=0,tr=0,tit=0,notas=[],taF=[],trF=[];
+  PARTIDOS.forEach(p=>{
+    min+=+p.minutos||0; gol+=+p.goles||0;
+    const a=+p.tarjAma||0, r=+p.tarjRoja||0; ta+=a; tr+=r;
+    if(String(p.estado||'').toUpperCase().includes('TITULAR')) tit++;
+    if(p.nota!==''&&p.nota!=null&&!isNaN(+p.nota)) notas.push(+p.nota);
+    if(a>0) taF.push(p.fecha); if(r>0) trF.push(p.fecha);
+  });
+  const prom=notas.length?notas.reduce((s,x)=>s+x,0)/notas.length:0;
+  const rangos=[
+    {l:'5.0 - 6.0',n:notas.filter(x=>x>=5).length},
+    {l:'4.0 - 4.9',n:notas.filter(x=>x>=4&&x<5).length},
+    {l:'3.0 - 3.9',n:notas.filter(x=>x>=3&&x<4).length},
+    {l:'0 - 2.9',n:notas.filter(x=>x<3).length}
+  ];
+  return {min,gol,ta,tr,tit,sup:PARTIDOS.length-tit,prom,notas,taF,trF,rangos};
+}
+function obsSugerida(s){
+  const eq=(PARTIDOS[0]&&PARTIDOS[0].equipo)||'la Academia';
+  let t='Jugador con regularidad en las convocatorias de '+eq+'. Ha sumado '+s.min+' minutos entre titularidades e ingresos desde el banco';
+  if(s.gol>0) t+=', aportando '+s.gol+' gol(es)';
+  t+='. ';
+  if(s.ta>0||s.tr>0) t+='Debe cuidar la disciplina ('+s.ta+' amarilla(s)'+(s.tr>0?' y '+s.tr+' roja(s)':'')+'). ';
+  if(s.notas.length) t+='Su promedio de nota es '+s.prom.toFixed(2)+'. ';
+  t+='Debe seguir trabajando para elevar su rendimiento en cancha.';
+  return t;
+}
+function stat(c,v,l){ return '<div class="stat"><div class="v" style="color:'+c+'">'+v+'</div><div class="l">'+l+'</div></div>'; }
+
+let CALC=null;
 function render(){
   if(!PARTIDOS.length){
     $('result').innerHTML='<div class="card" style="text-align:center;color:var(--muted)">'+esc(SEL.nombre)+' no tiene partidos registrados.</div>';
     $('savebar').classList.add('hidden'); return;
   }
-  let tMin=0,tGol=0,tAma=0;
-  PARTIDOS.forEach(p=>{ tMin+=+p.minutos||0; tGol+=+p.goles||0; tAma+=+p.tarjAma||0; });
-  let h='<div class="stats">'+
-    '<div class="stat"><div class="v" style="color:var(--pink)">'+PARTIDOS.length+'</div><div class="l">Partidos</div></div>'+
-    '<div class="stat"><div class="v" style="color:var(--pink)">'+tMin+'min</div><div class="l">Minutos</div></div>'+
-    '<div class="stat"><div class="v" style="color:var(--ok)">'+tGol+'</div><div class="l">Goles</div></div>'+
-    '<div class="stat"><div class="v" style="color:var(--warn)">'+tAma+'</div><div class="l">T. Amarillas</div></div>'+
+  const s=calc(); CALC=s;
+  let h='<div class="report-head"><div class="nm">'+esc(SEL.nombre)+'</div>'+
+    '<div class="pd">RUT '+esc(SEL.rut||'')+'  ·  Periodo: '+esc(periodo())+'</div></div>';
+  h+='<div class="sec-title">Resumen general</div><div class="stats">'+
+    stat('var(--pink)',PARTIDOS.length,'Partidos')+
+    stat('var(--pink)',s.min+"'",'Minutos')+
+    stat('var(--ok)',s.tit,'Titular')+
+    stat('var(--blue)',s.sup,'Suplente')+
+    stat('var(--ink)',s.gol,'Goles')+
+    stat('var(--warn)',s.ta,'T. Amarillas')+
+    stat('var(--red)',s.tr,'T. Rojas')+
+    stat('var(--pink)',s.notas.length?s.prom.toFixed(2):'—','Promedio Nota')+
     '</div>';
+  h+='<div class="sec-title">Detalle de partidos</div><div class="tbl-wrap"><table class="rt"><thead><tr>'+
+     ['Fecha','Equipo','Rival','Torneo','Res.','Marcador','Estado','Min','G','TA','TR','Nota'].map(x=>'<th>'+x+'</th>').join('')+
+     '</tr></thead><tbody>';
   PARTIDOS.forEach(p=>{
-    h+='<div class="match"><div class="top"><div>'+
-       '<div class="date">'+esc(fdate(p.fecha))+'</div>'+
-       '<div class="vs">vs '+esc(p.rival||'—')+'</div>'+
-       '<div class="team">'+esc(p.equipo||'')+'</div></div>'+
-       badge(p.estado)+'</div>'+
-       '<div class="mg">'+
-       '<div class="mc"><div class="v">'+(+p.minutos||0)+'min</div><div class="l">Minutos</div></div>'+
-       '<div class="mc"><div class="v" style="color:var(--ok)">'+(+p.goles||0)+'</div><div class="l">Goles</div></div>'+
-       '<div class="mc"><div class="l" style="margin-bottom:4px">Tarjetas</div><div class="tcard">'+
-         '<span class="tt">'+(+p.tarjAma||0)+'<span class="tsq" style="background:var(--warn)"></span></span>'+
-         '<span class="tt">'+(+p.tarjRoja||0)+'<span class="tsq" style="background:var(--red)"></span></span>'+
-       '</div></div>'+
-       '</div></div>';
+    h+='<tr><td>'+esc(p.fecha)+'</td><td class="l">'+esc(p.equipo)+'</td><td class="l">'+esc(p.rival)+'</td>'+
+       '<td>'+esc(p.torneo)+'</td><td>'+esc(p.resultado)+'</td><td>'+esc(p.marcador)+'</td>'+
+       '<td>'+esc(p.estado)+'</td><td>'+(+p.minutos||0)+'</td><td>'+(+p.goles||0)+'</td>'+
+       '<td>'+(+p.tarjAma||0)+'</td><td>'+(+p.tarjRoja||0)+'</td><td><b>'+(p.nota===''||p.nota==null?'—':p.nota)+'</b></td></tr>';
   });
+  h+='</tbody></table></div>';
+  h+='<div class="sec-title">Detalle disciplinario</div><table class="disc"><tr><th>Tipo</th><th>Cantidad</th><th>Fechas</th></tr>'+
+     '<tr><td><span class="dot" style="background:var(--warn)"></span>Tarjeta Amarilla</td><td>'+s.ta+'</td><td>'+(esc(s.taF.join(', '))||'—')+'</td></tr>'+
+     '<tr><td><span class="dot" style="background:var(--red)"></span>Tarjeta Roja</td><td>'+s.tr+'</td><td>'+(esc(s.trF.join(', '))||'—')+'</td></tr></table>';
+  h+='<div class="sec-title">Notas por rango</div>';
+  const tot=s.notas.length||1;
+  s.rangos.forEach(r=>{ const pct=Math.round(r.n/tot*100); h+='<div class="rango"><div class="rl"><span>'+r.l+'</span><span>'+r.n+' ('+pct+'%)</span></div><div class="rbar"><span style="width:'+pct+'%"></span></div></div>'; });
+  h+='<div class="sec-title">Observaciones</div><textarea class="obs-ta" id="obs-ta">'+esc(obsSugerida(s))+'</textarea>';
   $('result').innerHTML=h;
   $('savebar').classList.remove('hidden');
 }
 
-/* PDF */
+/* PDF — Informe de Jugador */
 $('btn-pdf').onclick=()=>{
   if(!SEL||!PARTIDOS.length){ toast('Primero busca un jugador con partidos.'); return; }
+  const s=CALC||calc();
   const { jsPDF }=window.jspdf;
   const doc=new jsPDF({unit:'mm',format:'a4'});
-  const W=210, M=14;
-  try{ doc.addImage(IMG_LOGO,'JPEG', M, 12, 16, 18); }catch(e){}
-  doc.setFont('helvetica','bold'); doc.setFontSize(17); doc.setTextColor(20,20,20);
-  doc.text('Detalles de Partidos', M+22, 20);
-  doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(90,90,90);
-  doc.text(SEL.nombre+'  ·  RUT '+(SEL.rut||''), M+22, 27);
-  let tMin=0,tGol=0,tAma=0,tRoj=0;
-  PARTIDOS.forEach(p=>{ tMin+=+p.minutos||0; tGol+=+p.goles||0; tAma+=+p.tarjAma||0; tRoj+=+p.tarjRoja||0; });
-  doc.setFontSize(11); doc.setTextColor(30,30,30);
-  doc.text('Partidos: '+PARTIDOS.length+'    Minutos: '+tMin+'    Goles: '+tGol+'    Amarillas: '+tAma+'    Rojas: '+tRoj, M, 40);
+  const W=210, H=297, M=12;
+  // Header
+  doc.setFillColor(17,17,17); doc.rect(0,0,W,32,'F');
+  try{ doc.addImage(IMG_LOGO,'JPEG', M, 6, 18, 20); }catch(e){}
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(19);
+  doc.text('INFORME DE JUGADOR', M+22, 15);
+  doc.setTextColor(255,46,147); doc.setFontSize(11);
+  doc.text('RENDIMIENTO Y PARTICIPACIÓN', M+22, 22);
+  doc.setFillColor(255,46,147); doc.roundedRect(W-74, 7, 62, 15, 2,2,'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','normal'); doc.setFontSize(6.5);
+  doc.text('PERIODO DEL INFORME', W-71, 12);
+  doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.text(periodo(), W-71, 18);
+  // Player band
+  doc.setFillColor(30,30,36); doc.rect(0,32,W,13,'F');
+  doc.setFillColor(255,46,147); doc.rect(0,32,4,13,'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(15);
+  doc.text((SEL.nombre||'').toUpperCase()+'    ·    RUT '+(SEL.rut||''), M, 41);
+  // Match table
   doc.autoTable({
-    startY: 45,
-    head: [['Fecha','Rival','Equipo','Estado','Min','Goles','Amar.','Rojas']],
-    body: PARTIDOS.map(p=>[p.fecha, p.rival, p.equipo, p.estado, (+p.minutos||0), (+p.goles||0), (+p.tarjAma||0), (+p.tarjRoja||0)]),
-    styles:{ fontSize:9, cellPadding:2.5 },
-    headStyles:{ fillColor:[199,15,110], textColor:255 },
-    alternateRowStyles:{ fillColor:[245,245,247] },
+    startY: 50,
+    head:[['Fecha','Equipo','Rival','Torneo','Res','Marc.','Estado','Min','G','TA','TR','Nota']],
+    body: PARTIDOS.map(p=>[p.fecha,p.equipo,p.rival,p.torneo,p.resultado,p.marcador,p.estado,(+p.minutos||0),(+p.goles||0),(+p.tarjAma||0),(+p.tarjRoja||0),(p.nota===''||p.nota==null?'':p.nota)]),
+    styles:{ fontSize:7.3, cellPadding:1.6, halign:'center', lineColor:[225,225,230], lineWidth:0.1 },
+    columnStyles:{ 1:{halign:'left'}, 2:{halign:'left'} },
+    headStyles:{ fillColor:[17,17,17], textColor:255, fontSize:7.3 },
+    alternateRowStyles:{ fillColor:[249,240,246] },
     margin:{ left:M, right:M }
   });
-  doc.save('Detalles de Partidos - '+SEL.nombre+'.pdf');
+  let y=doc.lastAutoTable.finalY+9;
+  // Resumen general (8 tarjetas, 4x2)
+  doc.setTextColor(199,15,110); doc.setFont('helvetica','bold'); doc.setFontSize(12);
+  doc.text('RESUMEN GENERAL', M, y); y+=4;
+  const cards=[['Partidos',PARTIDOS.length],['Minutos',s.min+"'"],['Titular',s.tit],['Suplente',s.sup],['Goles',s.gol],['T. Amarillas',s.ta],['T. Rojas',s.tr],['Prom. Nota',s.notas.length?s.prom.toFixed(2):'—']];
+  const gap=4, cwn=(W-M*2-gap*3)/4, chh=17;
+  cards.forEach((c,i)=>{
+    const col=i%4, row=Math.floor(i/4);
+    const x=M+col*(cwn+gap), yy=y+row*(chh+gap);
+    doc.setDrawColor(232,232,236); doc.setFillColor(250,248,250); doc.roundedRect(x,yy,cwn,chh,2,2,'FD');
+    doc.setTextColor(255,46,147); doc.setFont('helvetica','bold'); doc.setFontSize(15);
+    doc.text(String(c[1]), x+cwn/2, yy+9, {align:'center'});
+    doc.setTextColor(95,95,95); doc.setFont('helvetica','normal'); doc.setFontSize(7);
+    doc.text(String(c[0]).toUpperCase(), x+cwn/2, yy+13.5, {align:'center'});
+  });
+  y+=chh*2+gap+9;
+  if(y>240){ doc.addPage(); y=20; }
+  // Disciplinario
+  doc.setTextColor(199,15,110); doc.setFont('helvetica','bold'); doc.setFontSize(12);
+  doc.text('DETALLE DISCIPLINARIO', M, y); y+=2;
+  doc.autoTable({
+    startY:y,
+    head:[['Tipo','Cantidad','Fechas']],
+    body:[['Tarjeta Amarilla', s.ta, s.taF.join(', ')||'-'],['Tarjeta Roja', s.tr, s.trF.join(', ')||'-']],
+    styles:{fontSize:9,cellPadding:2.4}, headStyles:{fillColor:[17,17,17],textColor:255},
+    columnStyles:{1:{halign:'center',cellWidth:24}}, margin:{left:M,right:M}
+  });
+  y=doc.lastAutoTable.finalY+9;
+  if(y>250){ doc.addPage(); y=20; }
+  // Notas por rango
+  doc.setTextColor(199,15,110); doc.setFont('helvetica','bold'); doc.setFontSize(12);
+  doc.text('NOTAS POR RANGO', M, y); y+=7;
+  const tot=s.notas.length||1;
+  s.rangos.forEach(r=>{
+    const pct=Math.round(r.n/tot*100);
+    doc.setTextColor(40,40,40); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    doc.text(r.l, M, y); doc.text(r.n+' ('+pct+'%)', W-M, y, {align:'right'});
+    doc.setFillColor(234,234,238); doc.roundedRect(M+26, y-3, W-M*2-58, 3.4, 1,1,'F');
+    doc.setFillColor(255,46,147); doc.roundedRect(M+26, y-3, (W-M*2-58)*pct/100, 3.4, 1,1,'F');
+    y+=8;
+  });
+  y+=3;
+  if(y>250){ doc.addPage(); y=20; }
+  // Observaciones
+  doc.setTextColor(199,15,110); doc.setFont('helvetica','bold'); doc.setFontSize(12);
+  doc.text('OBSERVACIONES', M, y); y+=6;
+  doc.setTextColor(45,45,45); doc.setFont('helvetica','normal'); doc.setFontSize(10);
+  const obs=($('obs-ta')&&$('obs-ta').value)||obsSugerida(s);
+  const lines=doc.splitTextToSize(obs, W-M*2); doc.text(lines, M, y);
+  // Footer
+  doc.setFillColor(17,17,17); doc.rect(0,H-13,W,13,'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  doc.text('www.accionfutbol.cl   ·   @accion.futbol', M, H-5);
+  doc.setTextColor(255,46,147); doc.setFont('helvetica','bold');
+  doc.text('MÁS QUE FÚTBOL, FORMACIÓN PARA LA VIDA', W-M, H-5, {align:'right'});
+
+  doc.save('Informe de Jugador - '+SEL.nombre+'.pdf');
   toast('PDF generado');
 };
 
