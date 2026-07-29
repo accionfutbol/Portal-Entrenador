@@ -171,12 +171,14 @@ search.addEventListener('input', ()=>{
   list.querySelectorAll('.ac-item').forEach(it=>{ if(it.dataset.i!==undefined) it.onclick=()=>elegir(TODOS[+it.dataset.i]); });
 });
 document.addEventListener('click', e=>{ if(!e.target.closest('.ac-wrap')) $('ac-list').classList.add('hidden'); });
-$('btn-buscar').onclick=()=>{
+$('btn-buscar').onclick=async ()=>{
   const q=search.value.trim().toLowerCase();
   if(!q) return;
+  if(!TODOS.length){ await cargarTodos(); }
+  if(!TODOS.length){ $('app-err').textContent='La lista de jugadores no cargó. Falta re-desplegar el backend (acción todos/partidos) en AKfycbwa53.'; return; }
   const norm=s=>String(s||'').toLowerCase().replace(/[.\-\s]/g,'');
   const m=TODOS.find(p=>(p.nombre||'').toLowerCase()===q||norm(p.rut)===norm(q)) || TODOS.find(p=>(p.nombre||'').toLowerCase().includes(q)||norm(p.rut).includes(norm(q)));
-  if(m) elegir(m); else $('app-err').textContent='No encontré ese jugador.';
+  if(m) elegir(m); else $('app-err').textContent='No encontré "'+search.value.trim()+'" entre '+TODOS.length+' jugadores.';
 };
 search.addEventListener('keydown',e=>{ if(e.key==='Enter'){ $('ac-list').classList.add('hidden'); $('btn-buscar').click(); } });
 
