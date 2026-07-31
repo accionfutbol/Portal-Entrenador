@@ -33,6 +33,7 @@ input:focus,select:focus{border-color:var(--pink)}
 .player .pname{width:100%}
 .player .pn{font-weight:600;font-size:15px;line-height:1.25}
 .player .prut{font-size:11px;color:var(--muted2);margin-top:1px}
+.player .pcat{display:inline-block;font-size:11px;font-weight:600;color:var(--pink);background:rgba(255,46,147,.12);border:1px solid rgba(255,46,147,.3);border-radius:6px;padding:1px 8px;margin-top:4px}
 .marks{display:flex;gap:6px;width:100%}
 .pwa{flex-basis:100%;width:100%;display:flex;gap:8px;margin-top:2px}
 .pwa .mk-wa{flex:1;justify-content:center;height:40px;font-size:13px}
@@ -110,6 +111,10 @@ input:focus,select:focus{border-color:var(--pink)}
   </div>
 
   <div id="roster-wrap" class="hidden">
+    <div class="field hidden" id="cat-filter-wrap">
+      <label>Filtrar por categoría</label>
+      <select id="cat-filter"><option value="">Todas las categorías</option></select>
+    </div>
     <div class="summary" id="summary"></div>
     <div id="roster"></div>
   </div>
@@ -276,17 +281,33 @@ $('btn-cargar').onclick = async ()=>{
     const data=await res.json();
     if(data.error){ showErr('app-err',data.error); $('roster').innerHTML=''; $('savebar').classList.add('hidden'); $('btn-cargar').disabled=false; return; }
     ROSTER=data.jugadores||[];
+    buildCatFilter();
     renderRoster();
     $('savebar').classList.remove('hidden');
   }catch(e){ showErr('app-err','No se pudo cargar la lista.'); $('roster').innerHTML=''; }
   $('btn-cargar').disabled=false;
 };
 
+let CAT_FILTER='';
+function buildCatFilter(){
+  const cats=[]; const seen={};
+  ROSTER.forEach(p=>{ const c=(p.categoria||'').trim(); if(c&&!seen[c]){ seen[c]=1; cats.push(c); } });
+  const wrap=$('cat-filter-wrap'), sel=$('cat-filter');
+  if(cats.length>1){
+    sel.innerHTML='<option value="">Todas las categorías</option>'+cats.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
+    CAT_FILTER=''; sel.value='';
+    sel.onchange=()=>{ CAT_FILTER=sel.value; renderRoster(); };
+    wrap.classList.remove('hidden');
+  } else {
+    CAT_FILTER=''; wrap.classList.add('hidden');
+  }
+}
 function renderRoster(){
   let html='';
   ROSTER.forEach((p,i)=>{
+    if(CAT_FILTER && (p.categoria||'')!==CAT_FILTER) return;
     const marca=(p.marca||'').toUpperCase();
-    html+='<div class="player"><div class="pname"><div class="pn">'+esc(p.nombre)+'</div>'+(p.rut?'<div class="prut">'+esc(p.rut)+'</div>':'')+'</div><div class="marks">';
+    html+='<div class="player"><div class="pname"><div class="pn">'+esc(p.nombre)+'</div>'+(p.rut?'<div class="prut">'+esc(p.rut)+'</div>':'')+(p.categoria?'<div class="pcat">'+esc(p.categoria)+'</div>':'')+'</div><div class="marks">';
     MARCAS.forEach(m=>{ html+='<button class="mk '+m.toLowerCase()+(marca===m?' on':'')+'" data-i="'+i+'" data-m="'+m+'">'+m+'</button>'; });
     if(marca==='J') html+='<button class="mk-mot" data-i="'+i+'" title="Ver / escribir motivo">'+(p.opcion?'💬✓':'💬')+'</button>';
     html+='<button class="mk-obs" data-i="'+i+'" title="Observación del entrenador">O</button>';
