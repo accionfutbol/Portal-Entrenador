@@ -301,9 +301,6 @@ function render(){
   h+='<div class="sec-title">Detalle disciplinario</div><table class="disc"><tr><th>Tipo</th><th>Cantidad</th><th>Fechas</th></tr>'+
      '<tr><td><span class="dot" style="background:var(--warn)"></span>Tarjeta Amarilla</td><td>'+s.ta+'</td><td>'+(esc(s.taF.join(', '))||'—')+'</td></tr>'+
      '<tr><td><span class="dot" style="background:var(--red)"></span>Tarjeta Roja</td><td>'+s.tr+'</td><td>'+(esc(s.trF.join(', '))||'—')+'</td></tr></table>';
-  h+='<div class="sec-title">Notas por rango</div>';
-  const tot=s.notas.length||1;
-  s.rangos.forEach(r=>{ const pct=Math.round(r.n/tot*100); h+='<div class="rango"><div class="rl"><span>'+r.l+'</span><span>'+r.n+' ('+pct+'%)</span></div><div class="rbar"><span style="width:'+pct+'%"></span></div></div>'; });
   h+='<div class="sec-title">Observaciones</div><textarea class="obs-ta" id="obs-ta">'+esc(obsSugerida(s))+'</textarea>';
   $('result').innerHTML=h;
   $('savebar').classList.remove('hidden');
@@ -371,20 +368,6 @@ $('btn-pdf').onclick=()=>{
     columnStyles:{1:{halign:'center',cellWidth:24}}, margin:{left:M,right:M}
   });
   y=doc.lastAutoTable.finalY+9;
-  if(y>250){ doc.addPage(); y=20; }
-  // Notas por rango
-  doc.setTextColor(199,15,110); doc.setFont('helvetica','bold'); doc.setFontSize(12);
-  doc.text('NOTAS POR RANGO', M, y); y+=7;
-  const tot=s.notas.length||1;
-  s.rangos.forEach(r=>{
-    const pct=Math.round(r.n/tot*100);
-    doc.setTextColor(40,40,40); doc.setFont('helvetica','normal'); doc.setFontSize(9);
-    doc.text(r.l, M, y); doc.text(r.n+' ('+pct+'%)', W-M, y, {align:'right'});
-    doc.setFillColor(234,234,238); doc.roundedRect(M+26, y-3, W-M*2-58, 3.4, 1,1,'F');
-    doc.setFillColor(255,46,147); doc.roundedRect(M+26, y-3, (W-M*2-58)*pct/100, 3.4, 1,1,'F');
-    y+=8;
-  });
-  y+=3;
   if(y>250){ doc.addPage(); y=20; }
   // Observaciones
   doc.setTextColor(199,15,110); doc.setFont('helvetica','bold'); doc.setFontSize(12);
