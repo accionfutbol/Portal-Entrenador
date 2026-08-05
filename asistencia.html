@@ -35,6 +35,10 @@ input:focus,select:focus{border-color:var(--pink)}
 .player .prut{font-size:11px;color:var(--muted2);margin-top:1px}
 .player .pcat{display:inline-block;font-size:11px;font-weight:600;color:var(--pink);background:rgba(255,46,147,.12);border:1px solid rgba(255,46,147,.3);border-radius:6px;padding:1px 8px;margin-top:4px}
 .cat-head{font-family:'Oswald';font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#fff;background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--pink);border-radius:10px;padding:11px 14px;margin:16px 0 10px}
+.cat-tot{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.cat-tot .th{font-family:'Oswald';font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--pink);margin-bottom:8px}
+.cat-tot .row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--line)}
+.cat-tot .row:last-child{border-bottom:none}
 .marks{display:flex;gap:6px;width:100%}
 .pwa{flex-basis:100%;width:100%;display:flex;gap:8px;margin-top:2px}
 .pwa .mk-wa{flex:1;justify-content:center;height:40px;font-size:13px}
@@ -112,11 +116,13 @@ input:focus,select:focus{border-color:var(--pink)}
   </div>
 
   <div id="roster-wrap" class="hidden">
+    <button class="btn btn-ghost" id="btn-repoent" style="margin-bottom:12px">📋 Reporte del Entrenamiento</button>
     <div class="field hidden" id="cat-filter-wrap">
       <label>Filtrar por categoría</label>
       <select id="cat-filter"><option value="">Todas las categorías</option></select>
     </div>
     <div class="summary" id="summary"></div>
+    <div id="cat-totales"></div>
     <div id="roster"></div>
   </div>
 </div>
@@ -184,6 +190,42 @@ input:focus,select:focus{border-color:var(--pink)}
     <div class="modal-actions">
       <button class="btn btn-ghost" id="obs-cerrar">Cerrar</button>
       <button class="btn" id="obs-guardar">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REPORTE DEL ENTRENAMIENTO -->
+<div class="modal-bg hidden" id="repo-modal">
+  <div class="modal">
+    <div class="modal-h">Reporte del Entrenamiento</div>
+    <div style="display:flex;gap:10px">
+      <div style="flex:1"><div class="modal-lbl">Sede</div><div class="modal-form" id="repo-sede">—</div></div>
+      <div style="flex:1"><div class="modal-lbl">Categoría</div><div class="modal-form" id="repo-cat">—</div></div>
+    </div>
+    <div class="modal-lbl">Fecha</div><div class="modal-form" id="repo-fecha">—</div>
+    <div style="display:flex;gap:10px">
+      <div style="flex:1"><div class="modal-lbl">Hora inicio</div><input type="time" id="repo-ini" class="modal-sel"></div>
+      <div style="flex:1"><div class="modal-lbl">Hora fin</div><input type="time" id="repo-fin" class="modal-sel"></div>
+    </div>
+    <div class="modal-lbl">Cantidad de balones</div>
+    <input type="number" id="repo-balones" class="modal-sel" min="0" placeholder="Ej: 12">
+    <div class="modal-lbl">Observación del entrenamiento</div>
+    <textarea id="repo-obs" class="modal-ta" placeholder="Escribe cómo estuvo el entrenamiento..."></textarea>
+    <div class="modal-lbl">Entrenador</div>
+    <select id="repo-ent" class="modal-sel">
+      <option value="">— Selecciona —</option>
+      <option>GONZALO OPAZO</option><option>AGUSTIN SQUELLA</option><option>SEBASTIAN MESSEN</option>
+      <option>NICOLAS ARANCIBIA</option><option>BRIANT FIGUEROA</option><option>VICENTE ACEVEDO</option>
+      <option>MARCELO NEGRETTI</option><option>CHRISTIAN LABRA</option><option>SEBASTIAN MARDONES</option>
+      <option>ALEXIS ARANCIBIA</option><option>CAMILO BOSS</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="repo-cerrar">Cerrar</button>
+      <button class="btn" id="repo-guardar">Guardar</button>
+    </div>
+    <div class="modal-actions" style="margin-top:8px">
+      <button class="btn btn-ghost" id="repo-copiar" style="flex:1">📋 Copiar</button>
+      <button class="btn" id="repo-wa" style="flex:1">📲 WhatsApp</button>
     </div>
   </div>
 </div>
@@ -419,14 +461,70 @@ async function guardarObs(){
 }
 $('obs-guardar').onclick=guardarObs;
 $('obs-cerrar').onclick=()=>{ $('obs-modal').classList.add('hidden'); OBS_I=null; };
+
+/* ── Reporte del Entrenamiento ── */
+function abrirRepo(){
+  const val=$('sedecat').value;
+  if(!val){ toast('Elige sede y categoría'); return; }
+  const parts=val.split('||');
+  $('repo-sede').textContent=parts[0]||'—';
+  $('repo-cat').textContent=parts[1]||'—';
+  $('repo-fecha').textContent=$('fecha').value||todayStr();
+  $('repo-modal').classList.remove('hidden');
+}
+function repoTexto(){
+  return '📋 REPORTE DE ENTRENAMIENTO — Acción Fútbol\n'+
+    'Sede: '+$('repo-sede').textContent+'\n'+
+    'Categoría: '+$('repo-cat').textContent+'\n'+
+    'Fecha: '+$('repo-fecha').textContent+'\n'+
+    'Horario: '+($('repo-ini').value||'—')+' a '+($('repo-fin').value||'—')+'\n'+
+    'Balones: '+($('repo-balones').value||'—')+'\n'+
+    'Observación: '+($('repo-obs').value||'—')+'\n'+
+    'Entrenador: '+($('repo-ent').value||'—');
+}
+$('btn-repoent').onclick=abrirRepo;
+$('repo-cerrar').onclick=()=>$('repo-modal').classList.add('hidden');
+$('repo-guardar').onclick=async ()=>{
+  const parts=($('sedecat').value||'').split('||');
+  if(!$('repo-ent').value){ toast('Selecciona el entrenador'); return; }
+  const body={action:'repoent', sede:parts[0]||'', cat:parts[1]||'', fecha:$('repo-fecha').textContent,
+    horaIni:$('repo-ini').value, horaFin:$('repo-fin').value, balones:$('repo-balones').value,
+    observacion:$('repo-obs').value, entrenador:$('repo-ent').value};
+  $('repo-guardar').disabled=true; $('repo-guardar').textContent='Guardando...';
+  try{
+    body.idToken=await token();
+    const res=await fetch(API_ASIS,{method:'POST',body:JSON.stringify(body)});
+    const data=await res.json();
+    if(data.error) toast('Error: '+data.error); else toast('Reporte guardado');
+  }catch(e){ toast('No se pudo guardar.'); }
+  $('repo-guardar').disabled=false; $('repo-guardar').textContent='Guardar';
+};
+$('repo-copiar').onclick=()=>{
+  const txt=repoTexto();
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(()=>toast('Copiado')).catch(()=>toast('No se pudo copiar')); }
+  else { toast('Copia manual desde el mensaje'); }
+};
+$('repo-wa').onclick=()=>{ window.open('https://wa.me/?text='+encodeURIComponent(repoTexto()),'_blank'); };
 function updateSummary(){
   const c={OK:0,F:0,J:0,L:0};
-  ROSTER.forEach(p=>{ const m=(p.marca||'').toUpperCase(); if(m in c) c[m]++; });
+  const cats={}; let hayCat=false;
+  ROSTER.forEach(p=>{
+    const m=(p.marca||'').toUpperCase(); if(m in c) c[m]++;
+    const g=(p.categoria||'').trim();
+    if(g){ hayCat=true; if(!cats[g])cats[g]={ok:0,tot:0}; cats[g].tot++; if(m==='OK')cats[g].ok++; }
+  });
   $('summary').innerHTML=
     '<div class="sc"><div class="v" style="color:var(--ok)">'+c.OK+'</div><div class="l">Asistio</div></div>'+
     '<div class="sc"><div class="v" style="color:var(--red)">'+c.F+'</div><div class="l">Falto</div></div>'+
     '<div class="sc"><div class="v" style="color:var(--warn)">'+c.J+'</div><div class="l">Justif.</div></div>'+
     '<div class="sc"><div class="v" style="color:var(--blue)">'+c.L+'</div><div class="l">Lesion.</div></div>';
+  if(hayCat){
+    let h='<div class="cat-tot"><div class="th">Asistencia por categoría</div>'+
+      '<div class="row"><b>Total asistieron</b><b style="color:var(--ok)">'+c.OK+' / '+ROSTER.length+'</b></div>';
+    Object.keys(cats).forEach(g=>{ h+='<div class="row"><span>'+esc(g)+'</span><span><b style="color:var(--ok)">'+cats[g].ok+'</b> / '+cats[g].tot+'</span></div>'; });
+    h+='</div>';
+    $('cat-totales').innerHTML=h;
+  } else { $('cat-totales').innerHTML=''; }
 }
 
 $('btn-guardar').onclick = async ()=>{
