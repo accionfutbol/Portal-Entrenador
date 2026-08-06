@@ -148,8 +148,8 @@ input:focus,select:focus{border-color:var(--pink)}
       <option>PROBLEMAS FAMILIARES</option>
       <option>PROBLEMAS DE TRANSPORTE (NO TENGO QUIEN ME LLEVE)</option>
       <option>PROBLEMAS POR LA LLUVIA</option>
+      <option>SOLO ASISTE 2 VECES A LA SEMANA</option>
       <option>VACACIONES</option>
-      <option>ENTRENA SOLO 2 VECES A LA SEMANA</option>
     </select>
     <div class="modal-note">Usa este campo cuando el jugador no llenó el formulario pero te informó el motivo en privado. Queda registrado en la planilla de justificaciones (columna "Informado por el entrenador").</div>
     <div class="modal-actions">
@@ -176,10 +176,10 @@ input:focus,select:focus{border-color:var(--pink)}
     <div class="modal-lbl">Entrenador que informa</div>
     <select id="obs-ent" class="modal-sel">
       <option value="">— Selecciona —</option>
-      <option>JOSÉ ALMUNA</option>
-      <option>ESTEBAN TORRES</option>
       <option>GONZALO OPAZO</option>
       <option>AGUSTIN SQUELLA</option>
+      <option>JOSÉ ALMUNA</option>
+      <option>ESTEBAN TORRES</option>
       <option>SEBASTIAN MESSEN</option>
       <option>NICOLAS ARANCIBIA</option>
       <option>BRIANT FIGUEROA</option>
@@ -479,7 +479,7 @@ $('obs-guardar').onclick=guardarObs;
 $('obs-cerrar').onclick=()=>{ $('obs-modal').classList.add('hidden'); OBS_I=null; };
 
 /* ── Reporte del Entrenamiento ── */
-const AF_COACHES=['GONZALO OPAZO','AGUSTIN SQUELLA','SEBASTIAN MESSEN','NICOLAS ARANCIBIA','BRIANT FIGUEROA','VICENTE ACEVEDO','MARCELO NEGRETTI','CHRISTIAN LABRA','SEBASTIAN MARDONES','ALEXIS ARANCIBIA','CAMILO BOSS'];
+const AF_COACHES=['JOSÉ ALMUNA','ESTEBAN TORRES','GONZALO OPAZO','AGUSTIN SQUELLA','SEBASTIAN MESSEN','NICOLAS ARANCIBIA','BRIANT FIGUEROA','VICENTE ACEVEDO','MARCELO NEGRETTI','CHRISTIAN LABRA','SEBASTIAN MARDONES','ALEXIS ARANCIBIA','CAMILO BOSS'];
 document.querySelectorAll('.af-coaches').forEach(sel=>{
   sel.insertAdjacentHTML('beforeend', AF_COACHES.map(n=>'<option>'+n+'</option>').join(''));
 });
