@@ -209,21 +209,28 @@ input:focus,select:focus{border-color:var(--pink)}
       <div style="flex:1"><div class="modal-lbl">Justificaron</div><div class="modal-form" id="repo-just" style="color:var(--warn);font-weight:800;text-align:center">0</div></div>
       <div style="flex:1"><div class="modal-lbl">Lesionados</div><div class="modal-form" id="repo-lesi" style="color:var(--blue);font-weight:800;text-align:center">0</div></div>
     </div>
-    <div style="display:flex;gap:10px">
-      <div style="flex:1"><div class="modal-lbl">Hora inicio</div><input type="time" id="repo-ini" class="modal-sel"></div>
-      <div style="flex:1"><div class="modal-lbl">Hora fin</div><input type="time" id="repo-fin" class="modal-sel"></div>
-    </div>
+    <div class="modal-lbl">Horario</div>
+    <select id="repo-horario" class="modal-sel">
+      <option value="">— Selecciona —</option>
+      <option>17:00 a 18:30 horas</option>
+      <option>18:30 a 20:00 horas</option>
+      <option>19:00 a 20:30 horas</option>
+      <option>17:30 a 19:00 horas</option>
+    </select>
     <div class="modal-lbl">Cantidad de balones</div>
     <input type="number" id="repo-balones" class="modal-sel" min="0" placeholder="Ej: 12">
     <div class="modal-lbl">Observación del entrenamiento</div>
     <textarea id="repo-obs" class="modal-ta" placeholder="Escribe cómo estuvo el entrenamiento..."></textarea>
-    <div class="modal-lbl">Entrenador</div>
-    <select id="repo-ent" class="modal-sel">
+    <div class="modal-lbl">Encargado de reporte</div>
+    <select id="repo-ent" class="modal-sel af-coaches">
       <option value="">— Selecciona —</option>
-      <option>GONZALO OPAZO</option><option>AGUSTIN SQUELLA</option><option>SEBASTIAN MESSEN</option>
-      <option>NICOLAS ARANCIBIA</option><option>BRIANT FIGUEROA</option><option>VICENTE ACEVEDO</option>
-      <option>MARCELO NEGRETTI</option><option>CHRISTIAN LABRA</option><option>SEBASTIAN MARDONES</option>
-      <option>ALEXIS ARANCIBIA</option><option>CAMILO BOSS</option>
+    </select>
+    <div class="modal-lbl">Entrenadores en cancha</div>
+    <select id="repo-cancha1" class="modal-sel af-coaches">
+      <option value="">— Selecciona —</option>
+    </select>
+    <select id="repo-cancha2" class="modal-sel af-coaches" style="margin-top:8px">
+      <option value="">— Selecciona —</option>
     </select>
     <div class="modal-actions">
       <button class="btn btn-ghost" id="repo-cerrar">Cerrar</button>
@@ -469,6 +476,10 @@ $('obs-guardar').onclick=guardarObs;
 $('obs-cerrar').onclick=()=>{ $('obs-modal').classList.add('hidden'); OBS_I=null; };
 
 /* ── Reporte del Entrenamiento ── */
+const AF_COACHES=['GONZALO OPAZO','AGUSTIN SQUELLA','SEBASTIAN MESSEN','NICOLAS ARANCIBIA','BRIANT FIGUEROA','VICENTE ACEVEDO','MARCELO NEGRETTI','CHRISTIAN LABRA','SEBASTIAN MARDONES','ALEXIS ARANCIBIA','CAMILO BOSS'];
+document.querySelectorAll('.af-coaches').forEach(sel=>{
+  sel.insertAdjacentHTML('beforeend', AF_COACHES.map(n=>'<option>'+n+'</option>').join(''));
+});
 function repoConteo(){
   const c={OK:0,F:0,J:0,L:0};
   ROSTER.forEach(p=>{ const m=(p.marca||'').toUpperCase(); if(m in c) c[m]++; });
@@ -498,10 +509,11 @@ function repoTexto(){
     'Faltaron: '+k.F+'\n'+
     'Justificaron: '+k.J+'\n'+
     'Lesionados: '+k.L+'\n'+
-    'Horario: '+($('repo-ini').value||'—')+' a '+($('repo-fin').value||'—')+'\n'+
+    'Horario: '+($('repo-horario').value||'—')+'\n'+
     'Balones: '+($('repo-balones').value||'—')+'\n'+
     'Observación: '+($('repo-obs').value||'—')+'\n'+
-    'Entrenador: '+($('repo-ent').value||'—');
+    'Encargado de reporte: '+($('repo-ent').value||'—')+'\n'+
+    'Entrenadores en cancha: '+([$('repo-cancha1').value,$('repo-cancha2').value].filter(Boolean).join(', ')||'—');
 }
 $('btn-repoent').onclick=abrirRepo;
 $('repo-cerrar').onclick=()=>$('repo-modal').classList.add('hidden');
@@ -510,8 +522,9 @@ $('repo-guardar').onclick=async ()=>{
   if(!$('repo-ent').value){ toast('Selecciona el entrenador'); return; }
   const k=repoConteo();
   const body={action:'repoent', sede:parts[0]||'', cat:parts[1]||'', fecha:$('repo-fecha').textContent,
-    horaIni:$('repo-ini').value, horaFin:$('repo-fin').value, balones:$('repo-balones').value,
+    horario:$('repo-horario').value, balones:$('repo-balones').value,
     observacion:$('repo-obs').value, entrenador:$('repo-ent').value,
+    enCancha:[$('repo-cancha1').value,$('repo-cancha2').value].filter(Boolean).join(', '),
     asistieron:k.asist, faltaron:k.F, justificaron:k.J, lesionados:k.L};
   $('repo-guardar').disabled=true; $('repo-guardar').textContent='Guardando...';
   try{
