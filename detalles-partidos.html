@@ -84,6 +84,18 @@ table.rt td.l{text-align:left}
 .rbar{height:12px;background:var(--panel2);border-radius:6px;overflow:hidden}
 .rbar span{display:block;height:100%;background:var(--pink);border-radius:6px}
 .obs-ta{width:100%;box-sizing:border-box;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;color:var(--ink);font-family:inherit;line-height:1.5;min-height:96px;resize:vertical}
+.mnu{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+.mnu-btn{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;cursor:pointer;text-align:left;color:inherit}
+.mnu-btn:hover{border-color:var(--pink)}
+.mnu-btn .mi{font-size:26px}
+.mnu-btn .mt{font-family:'Oswald';font-weight:700;font-size:16px;text-transform:uppercase;letter-spacing:.03em}
+.mnu-btn .md{font-size:12px;color:var(--muted);margin-top:2px}
+.volver{display:inline-block;color:var(--muted);font-size:13px;cursor:pointer;margin-bottom:12px}
+.an-sec{font-family:'Oswald';font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--pink);margin:20px 0 8px}
+.an-list{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.an-list .row{display:flex;justify-content:space-between;gap:8px;padding:9px 12px;font-size:13px;border-bottom:1px solid var(--line)}
+.an-list .row:last-child{border-bottom:none}
+.an-badge{font-size:11px;color:var(--warn)}
 </style>
 </head>
 <body>
@@ -108,10 +120,17 @@ table.rt td.l{text-align:left}
 <!-- APP -->
 <div id="app" class="wrap hidden">
   <div class="logout" id="btn-logout">Salir</div>
-  <h1>Detalles de <em>Partidos</em></h1>
-  <p class="sub">Busca los partidos de cualquier jugador por RUT o nombre.</p>
+  <h1>Información de <em>Minutaje</em></h1>
+  <p class="sub">Elige una opción.</p>
 
-  <div class="ac-wrap">
+  <div id="mnu" class="mnu">
+    <button class="mnu-btn" id="mnu-detalles"><span class="mi">📋</span><div class="mtxt"><div class="mt">Detalles de Partidos</div><div class="md">Busca y descarga el informe de un jugador</div></div></button>
+    <button class="mnu-btn" id="mnu-analisis"><span class="mi">📊</span><div class="mtxt"><div class="mt">Análisis de Minutaje</div><div class="md">Torneos, minutajes y partidos por sede y categoría</div></div></button>
+  </div>
+
+  <div id="view-detalles" class="hidden">
+    <a class="volver" id="det-volver">← Volver al menú</a>
+    <div class="ac-wrap">
     <div class="searchbar">
       <input type="text" id="search" placeholder="Nombre o RUT del jugador..." autocomplete="off">
       <button id="btn-buscar">Buscar</button>
@@ -119,8 +138,16 @@ table.rt td.l{text-align:left}
     <div class="ac-list hidden" id="ac-list"></div>
   </div>
   <div class="err" id="app-err"></div>
-
   <div id="result"></div>
+  </div>
+
+  <div id="view-analisis" class="hidden">
+    <a class="volver" id="an-volver">← Volver al menú</a>
+    <div class="field" style="margin-bottom:12px"><label>Sede y categoría</label><select id="an-sedecat"><option value="">Cargando...</option></select></div>
+    <button class="btn" id="an-ver">Ver análisis</button>
+    <div class="err" id="an-err"></div>
+    <div id="an-result"></div>
+  </div>
 </div>
 
 <div class="savebar hidden" id="savebar"><div class="inner">
@@ -159,7 +186,7 @@ $('btn-logout').onclick=()=>fbAuth.signOut();
 $('pass').addEventListener('keydown',e=>{ if(e.key==='Enter') $('btn-login').click(); });
 
 fbAuth.onAuthStateChanged(async u=>{
-  if(u){ $('login').classList.add('hidden'); $('app').classList.remove('hidden'); await cargarTodos(); }
+  if(u){ $('login').classList.add('hidden'); $('app').classList.remove('hidden'); showMenu(); await cargarTodos(); }
   else { $('app').classList.add('hidden'); $('savebar').classList.add('hidden'); $('login').classList.remove('hidden'); }
 });
 async function token(){ const u=fbAuth.currentUser; if(!u) throw new Error('Sesión no iniciada'); return await u.getIdToken(); }
@@ -385,6 +412,67 @@ $('btn-pdf').onclick=()=>{
   doc.save('Informe de Jugador - '+SEL.nombre+'.pdf');
   toast('PDF generado');
 };
+
+
+function showMenu(){ $('mnu').classList.remove('hidden'); $('view-detalles').classList.add('hidden'); $('view-analisis').classList.add('hidden'); $('savebar').classList.add('hidden'); }
+$('mnu-detalles')&&($('mnu-detalles').onclick=()=>{ $('mnu').classList.add('hidden'); $('view-detalles').classList.remove('hidden'); });
+$('mnu-analisis')&&($('mnu-analisis').onclick=()=>{ $('mnu').classList.add('hidden'); $('view-analisis').classList.remove('hidden'); cargarSedesAnalisis(); });
+$('det-volver')&&($('det-volver').onclick=showMenu);
+$('an-volver')&&($('an-volver').onclick=showMenu);
+let SEDES_AN=false;
+async function cargarSedesAnalisis(){
+  if(SEDES_AN) return;
+  try{
+    const t=await token();
+    const res=await fetch(API_ASIS+'?action=config&idToken='+encodeURIComponent(t));
+    const data=await res.json();
+    const sel=$('an-sedecat');
+    if(!data.sedes){ sel.innerHTML='<option value="">Sin datos</option>'; return; }
+    sel.innerHTML='<option value="">Selecciona...</option>'+data.sedes.map(x=>'<option value="'+esc(x.sede)+'||'+esc(x.categoria)+'">'+esc(x.sede)+' · '+esc(x.categoria)+'</option>').join('');
+    SEDES_AN=true;
+  }catch(e){ $('an-sedecat').innerHTML='<option value="">Error</option>'; }
+}
+$('an-ver')&&($('an-ver').onclick=async ()=>{
+  const val=$('an-sedecat').value; $('an-err').textContent='';
+  if(!val){ $('an-err').textContent='Elige sede y categoría.'; return; }
+  const parts=val.split('||');
+  $('an-result').innerHTML='<div class="loader">Cargando análisis...</div>';
+  try{
+    const t=await token();
+    const q='?action=analisis&sede='+encodeURIComponent(parts[0])+'&cat='+encodeURIComponent(parts[1])+'&idToken='+encodeURIComponent(t);
+    const res=await fetch(API_ASIS+q); const data=await res.json();
+    if(data.error){ $('an-result').innerHTML='<div class="loader">'+esc(data.error)+'</div>'; return; }
+    renderAnalisis(parts[0],parts[1],data.jugadores||[]);
+  }catch(e){ $('an-result').innerHTML='<div class="loader">No se pudo cargar el análisis.</div>'; }
+});
+function renderAnalisis(sede,cat,js){
+  if(!js.length){ $('an-result').innerHTML='<div class="loader">Sin jugadores para '+esc(sede)+' · '+esc(cat)+'.</div>'; return; }
+  const enTorneo=js.filter(p=>p.enTorneo), noTorneo=js.filter(p=>!p.enTorneo), bajo=js.filter(p=>(+p.min||0)<200);
+  const tor={}; enTorneo.forEach(p=>{ const k=p.torneo||'—'; tor[k]=(tor[k]||0)+1; });
+  let h='<div class="report-head"><div class="nm">'+esc(sede)+' · '+esc(cat)+'</div><div class="pd">'+js.length+' jugadores</div></div>';
+  h+='<div class="stats">'+
+    '<div class="stat"><div class="v" style="color:var(--pink)">'+enTorneo.length+'</div><div class="l">En torneo</div></div>'+
+    '<div class="stat"><div class="v" style="color:var(--muted)">'+noTorneo.length+'</div><div class="l">Sin torneo</div></div>'+
+    '<div class="stat"><div class="v" style="color:var(--warn)">'+bajo.length+'</div><div class="l">&lt; 200 min</div></div>'+
+    '<div class="stat"><div class="v" style="color:var(--pink)">'+js.length+'</div><div class="l">Total</div></div></div>';
+  h+='<div class="an-sec">Torneos</div><div class="an-list">';
+  const tks=Object.keys(tor);
+  if(tks.length){ tks.forEach(k=>{ h+='<div class="row"><span>'+esc(k)+'</span><b>'+tor[k]+'</b></div>'; }); }
+  else h+='<div class="row"><span>Ningún jugador en torneo</span></div>';
+  h+='</div>';
+  h+='<div class="an-sec">Minutaje bajo (&lt; 200 min)</div><div class="an-list">';
+  if(bajo.length){ bajo.sort((a,b)=>(+a.min||0)-(+b.min||0)).forEach(p=>{ h+='<div class="row"><span>'+esc(p.nombre)+(p.enTorneo?' <span class="an-badge">'+esc(p.torneo)+'</span>':'')+'</span><b>'+(+p.min||0)+' min</b></div>'; }); }
+  else h+='<div class="row"><span>Nadie bajo 200 min</span></div>';
+  h+='</div>';
+  h+='<div class="an-sec">No están en torneo</div><div class="an-list">';
+  if(noTorneo.length){ noTorneo.forEach(p=>{ h+='<div class="row"><span>'+esc(p.nombre)+'</span><b>'+(+p.min||0)+' min</b></div>'; }); }
+  else h+='<div class="row"><span>Todos están en torneo</span></div>';
+  h+='</div>';
+  h+='<div class="an-sec">Detalle por jugador</div><div class="tbl-wrap"><table class="rt"><thead><tr><th>Jugador</th><th>Torneo</th><th>Min</th><th>P. Torneo</th><th>Amistosos</th></tr></thead><tbody>';
+  js.forEach(p=>{ h+='<tr><td class="l">'+esc(p.nombre)+'</td><td class="l">'+esc(p.torneo||'—')+'</td><td>'+(+p.min||0)+'</td><td>'+(+p.pTorneo||0)+'</td><td>'+(+p.pAmistoso||0)+'</td></tr>'; });
+  h+='</tbody></table></div>';
+  $('an-result').innerHTML=h;
+}
 
 function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
 function esc(s){ return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
