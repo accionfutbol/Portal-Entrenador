@@ -203,6 +203,12 @@ input:focus,select:focus{border-color:var(--pink)}
       <div style="flex:1"><div class="modal-lbl">Categoría</div><div class="modal-form" id="repo-cat">—</div></div>
     </div>
     <div class="modal-lbl">Fecha</div><div class="modal-form" id="repo-fecha">—</div>
+    <div style="display:flex;gap:8px">
+      <div style="flex:1"><div class="modal-lbl">Asistieron</div><div class="modal-form" id="repo-asist" style="color:var(--ok);font-weight:800;text-align:center">0</div></div>
+      <div style="flex:1"><div class="modal-lbl">Faltaron</div><div class="modal-form" id="repo-falt" style="color:var(--red);font-weight:800;text-align:center">0</div></div>
+      <div style="flex:1"><div class="modal-lbl">Justificaron</div><div class="modal-form" id="repo-just" style="color:var(--warn);font-weight:800;text-align:center">0</div></div>
+      <div style="flex:1"><div class="modal-lbl">Lesionados</div><div class="modal-form" id="repo-lesi" style="color:var(--blue);font-weight:800;text-align:center">0</div></div>
+    </div>
     <div style="display:flex;gap:10px">
       <div style="flex:1"><div class="modal-lbl">Hora inicio</div><input type="time" id="repo-ini" class="modal-sel"></div>
       <div style="flex:1"><div class="modal-lbl">Hora fin</div><input type="time" id="repo-fin" class="modal-sel"></div>
@@ -463,6 +469,11 @@ $('obs-guardar').onclick=guardarObs;
 $('obs-cerrar').onclick=()=>{ $('obs-modal').classList.add('hidden'); OBS_I=null; };
 
 /* ── Reporte del Entrenamiento ── */
+function repoConteo(){
+  const c={OK:0,F:0,J:0,L:0};
+  ROSTER.forEach(p=>{ const m=(p.marca||'').toUpperCase(); if(m in c) c[m]++; });
+  return { asist:c.OK, noAsist:c.F+c.J+c.L, F:c.F, J:c.J, L:c.L, total:ROSTER.length };
+}
 function abrirRepo(){
   const val=$('sedecat').value;
   if(!val){ toast('Elige sede y categoría'); return; }
@@ -470,13 +481,23 @@ function abrirRepo(){
   $('repo-sede').textContent=parts[0]||'—';
   $('repo-cat').textContent=parts[1]||'—';
   $('repo-fecha').textContent=$('fecha').value||todayStr();
+  const k=repoConteo();
+  $('repo-asist').textContent=k.asist;
+  $('repo-falt').textContent=k.F;
+  $('repo-just').textContent=k.J;
+  $('repo-lesi').textContent=k.L;
   $('repo-modal').classList.remove('hidden');
 }
 function repoTexto(){
+  const k=repoConteo();
   return '📋 REPORTE DE ENTRENAMIENTO — Acción Fútbol\n'+
     'Sede: '+$('repo-sede').textContent+'\n'+
     'Categoría: '+$('repo-cat').textContent+'\n'+
     'Fecha: '+$('repo-fecha').textContent+'\n'+
+    'Asistieron: '+k.asist+'\n'+
+    'Faltaron: '+k.F+'\n'+
+    'Justificaron: '+k.J+'\n'+
+    'Lesionados: '+k.L+'\n'+
     'Horario: '+($('repo-ini').value||'—')+' a '+($('repo-fin').value||'—')+'\n'+
     'Balones: '+($('repo-balones').value||'—')+'\n'+
     'Observación: '+($('repo-obs').value||'—')+'\n'+
@@ -487,9 +508,11 @@ $('repo-cerrar').onclick=()=>$('repo-modal').classList.add('hidden');
 $('repo-guardar').onclick=async ()=>{
   const parts=($('sedecat').value||'').split('||');
   if(!$('repo-ent').value){ toast('Selecciona el entrenador'); return; }
+  const k=repoConteo();
   const body={action:'repoent', sede:parts[0]||'', cat:parts[1]||'', fecha:$('repo-fecha').textContent,
     horaIni:$('repo-ini').value, horaFin:$('repo-fin').value, balones:$('repo-balones').value,
-    observacion:$('repo-obs').value, entrenador:$('repo-ent').value};
+    observacion:$('repo-obs').value, entrenador:$('repo-ent').value,
+    asistieron:k.asist, faltaron:k.F, justificaron:k.J, lesionados:k.L};
   $('repo-guardar').disabled=true; $('repo-guardar').textContent='Guardando...';
   try{
     body.idToken=await token();
