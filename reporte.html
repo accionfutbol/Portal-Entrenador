@@ -91,6 +91,19 @@ input:focus,select:focus{border-color:var(--pink)}
 .wa-row{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
 .wa-btn{display:inline-flex;align-items:center;gap:5px;background:rgba(37,211,102,.14);border:1px solid #25D366;color:#25D366;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap}
 .wa-btn:hover{background:rgba(37,211,102,.22)}
+.rep-row{cursor:pointer}
+.rep-row:hover td{background:rgba(255,46,147,.08)}
+.dia-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:80;padding:18px}
+.dia-modal-bg.hidden{display:none}
+.dia-modal{background:var(--panel,#16161d);border:1px solid var(--line,#2a2a35);border-radius:16px;max-width:420px;width:100%;max-height:80vh;overflow:auto;padding:20px}
+.dia-h{font-family:'Oswald',sans-serif;font-weight:700;font-size:16px;text-transform:uppercase;letter-spacing:.04em;color:var(--pink,#ff2e93)}
+.dia-name{font-size:15px;font-weight:600;margin:2px 0 14px}
+.dia-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line,#2a2a35)}
+.dia-row:last-child{border-bottom:none}
+.dia-f{font-size:14px}
+.dia-badge{font-size:12px;font-weight:600;border:1px solid;border-radius:999px;padding:3px 12px}
+.dia-empty{color:var(--muted,#9a9aa8);font-size:14px;padding:10px 0}
+.dia-close{width:100%;margin-top:16px;padding:12px;border:1.5px solid var(--line,#2a2a35);background:transparent;color:var(--ink,#f2f2f5);border-radius:10px;font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer}
 </style>
 </head>
 <body>
@@ -227,12 +240,33 @@ function waBtns(p){
 }
 
 let REP_SORT={campo:null,dir:'desc'};
+let REP_JUG=[];
 function filasRep(jug){
-  return (jug||[]).map(p=>'<tr><td class="tj">'+esc(p.nombre)+'</td>'+
+  REP_JUG=jug||[];
+  return REP_JUG.map((p,i)=>'<tr class="rep-row" data-i="'+i+'"><td class="tj">'+esc(p.nombre)+'</td>'+
     '<td class="c-ok">'+(p.OK||'')+'</td>'+
     '<td class="c-f">'+(p.F||'')+'</td>'+
     '<td class="c-j">'+(p.J||'')+'</td>'+
     '<td class="c-l">'+(p.L||'')+'</td></tr>').join('');
+}
+function bindRepRows(){ document.querySelectorAll('#rtab-body .rep-row').forEach(tr=>tr.onclick=()=>openDias(+tr.dataset.i)); }
+function diaBadge(m){
+  m=(m||'').toUpperCase();
+  const map={OK:['Asistió','#27c281'],F:['No asistió','#ff4d5e'],J:['Justificó','#ffb020'],L:['Lesionado','#64c8ff']};
+  const x=map[m]||[m,'#9a9aa8'];
+  return '<span class="dia-badge" style="color:'+x[1]+';border-color:'+x[1]+'">'+x[0]+'</span>';
+}
+function openDias(i){
+  const p=REP_JUG[i]; if(!p) return;
+  document.getElementById('dia-nombre').textContent=p.nombre;
+  const dias=(p.dias||[]).slice();
+  const parse=f=>{const x=String(f).split('-');return new Date(+x[2],+x[1]-1,+x[0]);};
+  dias.sort((a,b)=>parse(a.fecha)-parse(b.fecha));
+  let h='';
+  if(!dias.length) h='<div class="dia-empty">Sin registros de días para este jugador.</div>';
+  else dias.forEach(d=>{ h+='<div class="dia-row"><span class="dia-f">'+esc(d.fecha)+'</span>'+diaBadge(d.marca)+'</div>'; });
+  document.getElementById('dia-list').innerHTML=h;
+  document.getElementById('dia-modal').classList.remove('hidden');
 }
 function sortRep(campo){
   if(!CAT||!CAT.c) return;
@@ -245,7 +279,7 @@ function sortRep(campo){
     return d!==0 ? d : a.nombre.localeCompare(b.nombre,'es');
   });
   const body=document.getElementById('rtab-body');
-  if(body) body.innerHTML=filasRep(jug);
+  if(body){ body.innerHTML=filasRep(jug); bindRepRows(); }
   ['OK','F','J','L'].forEach(k=>{
     const el=document.getElementById('arr-'+k);
     if(el) el.textContent=(REP_SORT.campo===k)?(dir==='desc'?' ▼':' ▲'):'';
@@ -304,6 +338,7 @@ function render(c, rep){
 
   h+='</div>';
   $('result').innerHTML=h;
+  bindRepRows();
   drawChart(c);
 }
 let _cid=0;
@@ -422,6 +457,16 @@ $('btn-pdf').onclick=()=>{
 };
 
 function esc(s){ return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+document.getElementById('dia-cerrar')&&(document.getElementById('dia-cerrar').onclick=()=>document.getElementById('dia-modal').classList.add('hidden'));
+document.getElementById('dia-modal')&&(document.getElementById('dia-modal').onclick=(e)=>{ if(e.target.id==='dia-modal') e.currentTarget.classList.add('hidden'); });
 </script>
+<div class="dia-modal-bg hidden" id="dia-modal">
+  <div class="dia-modal">
+    <div class="dia-h">Días de asistencia</div>
+    <div class="dia-name" id="dia-nombre"></div>
+    <div id="dia-list"></div>
+    <button class="dia-close" id="dia-cerrar">Cerrar</button>
+  </div>
+</div>
 </body>
 </html>
