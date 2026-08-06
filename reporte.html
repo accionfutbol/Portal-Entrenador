@@ -460,12 +460,12 @@ function esc(s){ return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&l
 document.getElementById('dia-cerrar')&&(document.getElementById('dia-cerrar').onclick=()=>document.getElementById('dia-modal').classList.add('hidden'));
 document.getElementById('dia-modal')&&(document.getElementById('dia-modal').onclick=(e)=>{ if(e.target.id==='dia-modal') e.currentTarget.classList.add('hidden'); });
 </script>
-<div class="dia-modal-bg hidden" id="dia-modal">
+<div class="dia-modal-bg hidden" id="dia-modal" onclick="if(event.target.id==='dia-modal')this.classList.add('hidden')">
   <div class="dia-modal">
     <div class="dia-h">Días de asistencia</div>
     <div class="dia-name" id="dia-nombre"></div>
     <div id="dia-list"></div>
-    <button class="dia-close" id="dia-cerrar">Cerrar</button>
+    <button class="dia-close" onclick="document.getElementById('dia-modal').classList.add('hidden')">Cerrar</button>
   </div>
 </div>
 </body>
