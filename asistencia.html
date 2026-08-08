@@ -179,6 +179,7 @@ input:focus,select:focus{border-color:var(--pink)}
       <option>GONZALO OPAZO</option>
       <option>AGUSTIN SQUELLA</option>
       <option>JOSÉ ALMUNA</option>
+      <option>LUIS VARGAS</option>
       <option>ESTEBAN TORRES</option>
       <option>SEBASTIAN MESSEN</option>
       <option>NICOLAS ARANCIBIA</option>
@@ -479,7 +480,7 @@ $('obs-guardar').onclick=guardarObs;
 $('obs-cerrar').onclick=()=>{ $('obs-modal').classList.add('hidden'); OBS_I=null; };
 
 /* ── Reporte del Entrenamiento ── */
-const AF_COACHES=['JOSÉ ALMUNA','ESTEBAN TORRES','GONZALO OPAZO','AGUSTIN SQUELLA','SEBASTIAN MESSEN','NICOLAS ARANCIBIA','BRIANT FIGUEROA','VICENTE ACEVEDO','MARCELO NEGRETTI','CHRISTIAN LABRA','SEBASTIAN MARDONES','ALEXIS ARANCIBIA','CAMILO BOSS'];
+const AF_COACHES=['JOSÉ ALMUNA','ESTEBAN TORRES','LUIS VARGAS','GONZALO OPAZO','AGUSTIN SQUELLA','SEBASTIAN MESSEN','NICOLAS ARANCIBIA','BRIANT FIGUEROA','VICENTE ACEVEDO','MARCELO NEGRETTI','CHRISTIAN LABRA','SEBASTIAN MARDONES','ALEXIS ARANCIBIA','CAMILO BOSS'];
 document.querySelectorAll('.af-coaches').forEach(sel=>{
   sel.insertAdjacentHTML('beforeend', AF_COACHES.map(n=>'<option>'+n+'</option>').join(''));
 });
