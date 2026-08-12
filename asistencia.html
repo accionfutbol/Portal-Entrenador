@@ -148,7 +148,6 @@ input:focus,select:focus{border-color:var(--pink)}
       <option>PROBLEMAS FAMILIARES</option>
       <option>PROBLEMAS DE TRANSPORTE (NO TENGO QUIEN ME LLEVE)</option>
       <option>PROBLEMAS POR LA LLUVIA</option>
-      <option>SOLO ASISTE 2 VECES A LA SEMANA</option>
       <option>VACACIONES</option>
     </select>
     <div class="modal-note">Usa este campo cuando el jugador no llenó el formulario pero te informó el motivo en privado. Queda registrado en la planilla de justificaciones (columna "Informado por el entrenador").</div>
@@ -173,14 +172,20 @@ input:focus,select:focus{border-color:var(--pink)}
       <option>CAMBIO DE NIVEL</option>
       <option>NUNCA ASISTIO A LOS ENTRENAMIENTOS</option>
     </select>
+    <div id="obs-cat-wrap" class="hidden">
+      <div class="modal-lbl">Cambiar a la categoría</div>
+      <select id="obs-cat" class="modal-sel">
+        <option value="">— Selecciona —</option>
+        <option>SUB18</option>
+        <option>SUB16</option>
+        <option>SUB14</option>
+      </select>
+    </div>
     <div class="modal-lbl">Entrenador que informa</div>
     <select id="obs-ent" class="modal-sel">
       <option value="">— Selecciona —</option>
       <option>GONZALO OPAZO</option>
       <option>AGUSTIN SQUELLA</option>
-      <option>JOSÉ ALMUNA</option>
-      <option>LUIS VARGAS</option>
-      <option>ESTEBAN TORRES</option>
       <option>SEBASTIAN MESSEN</option>
       <option>NICOLAS ARANCIBIA</option>
       <option>BRIANT FIGUEROA</option>
@@ -370,7 +375,7 @@ function playerHTML(p,i){
   html+='<button class="mk-obs" data-i="'+i+'" title="Observación del entrenador">O</button>';
   html+='</div>';
   if(marca==='F'){
-    const msg=encodeURIComponent('Hola. ¿Como estás?  Quisiéramos saber por qué '+p.nombre+' no pudiste asistir al entrenamiento hoy. Favor te solicitamos realizar el formulario de Inasistencia: https://bit.ly/justificacioninasistenciaaf');
+    const msg=encodeURIComponent('Buenas Tardes. Quisiéramos saber por qué '+p.nombre+' no asistió al entrenamiento hoy.');
     const tj=waNum(p.telJug), ta=waNum(p.telApo);
     let wa='';
     if(tj) wa+='<a class="mk-wa" href="https://wa.me/'+tj+'?text='+msg+'" target="_blank" rel="noopener" title="WhatsApp al jugador">📱 Jugador</a>';
@@ -457,13 +462,23 @@ function abrirObs(i){
   OBS_I=i; const p=ROSTER[i];
   $('obs-nombre').textContent=p.nombre;
   $('obs-sel').value=''; $('obs-ent').value='';
+  $('obs-cat').value=''; $('obs-cat-wrap').classList.add('hidden');
   $('obs-modal').classList.remove('hidden');
 }
+$('obs-sel').onchange=()=>{
+  const esCambio=$('obs-sel').value==='CAMBIO DE CATEGORIA';
+  $('obs-cat-wrap').classList.toggle('hidden', !esCambio);
+  if(!esCambio) $('obs-cat').value='';
+};
 async function guardarObs(){
   if(OBS_I==null) return;
   const p=ROSTER[OBS_I];
-  const obs=$('obs-sel').value, ent=$('obs-ent').value;
+  let obs=$('obs-sel').value; const ent=$('obs-ent').value;
   if(!obs){ toast('Selecciona una observación'); return; }
+  if(obs==='CAMBIO DE CATEGORIA'){
+    if(!$('obs-cat').value){ toast('Selecciona la categoría destino'); return; }
+    obs='CAMBIO DE CATEGORIA A '+$('obs-cat').value;
+  }
   if(!ent){ toast('Selecciona el entrenador'); return; }
   const val=$('sedecat').value, parts=val.split('||'), sede=parts[0]||'', cat=parts[1]||'';
   $('obs-guardar').disabled=true; $('obs-guardar').textContent='Guardando...';
@@ -480,7 +495,7 @@ $('obs-guardar').onclick=guardarObs;
 $('obs-cerrar').onclick=()=>{ $('obs-modal').classList.add('hidden'); OBS_I=null; };
 
 /* ── Reporte del Entrenamiento ── */
-const AF_COACHES=['JOSÉ ALMUNA','ESTEBAN TORRES','LUIS VARGAS','GONZALO OPAZO','AGUSTIN SQUELLA','SEBASTIAN MESSEN','NICOLAS ARANCIBIA','BRIANT FIGUEROA','VICENTE ACEVEDO','MARCELO NEGRETTI','CHRISTIAN LABRA','SEBASTIAN MARDONES','ALEXIS ARANCIBIA','CAMILO BOSS'];
+const AF_COACHES=['JOSÉ ALMUNA','ESTEBAN TORRES','GONZALO OPAZO','AGUSTIN SQUELLA','SEBASTIAN MESSEN','NICOLAS ARANCIBIA','BRIANT FIGUEROA','VICENTE ACEVEDO','MARCELO NEGRETTI','CHRISTIAN LABRA','SEBASTIAN MARDONES','ALEXIS ARANCIBIA','CAMILO BOSS'];
 document.querySelectorAll('.af-coaches').forEach(sel=>{
   sel.insertAdjacentHTML('beforeend', AF_COACHES.map(n=>'<option>'+n+'</option>').join(''));
 });
