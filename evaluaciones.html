@@ -177,7 +177,8 @@ async function cargarConfig(){
     const res=await fetch(API_ASIS+'?action=evalconfig&idToken='+encodeURIComponent(t));
     const data=await res.json();
     const sel=$('sedecat');
-    if(!data.sedes||!data.sedes.length){ sel.innerHTML='<option value="">Sin datos</option>'; return; }
+    if(data.error){ sel.innerHTML='<option value="">Sin datos</option>'; showErr('app-err','Backend: '+data.error); return; }
+    if(!data.sedes||!data.sedes.length){ sel.innerHTML='<option value="">Sin datos</option>'; showErr('app-err','El backend no devolvió sedes. ¿Redesplegaste la Versión nueva y compartiste la planilla con informacion@?'); return; }
     sel.innerHTML='<option value="">Selecciona...</option>'+data.sedes.map(x=>'<option value="'+esc(x.sede)+'||'+esc(x.categoria)+'">'+esc(x.sede)+' · '+esc(x.categoria)+'</option>').join('');
   }catch(e){ $('sedecat').innerHTML='<option value="">Error de conexión</option>'; }
 }
