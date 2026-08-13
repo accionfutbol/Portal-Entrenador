@@ -56,6 +56,17 @@ input:focus,select:focus,textarea:focus{border-color:var(--pink)}
 .row2>div{flex:1}
 .notes{display:flex;gap:8px}
 .notes>div{flex:1}
+.escala-tag{font-size:11.5px;color:var(--pink);font-weight:600;margin-top:10px;line-height:1.35}
+.guia{margin-top:8px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.4}
+.guia .gl{margin-bottom:6px}
+.guia .gl:last-child{margin-bottom:0}
+.guia b{color:var(--ink)}
+.escala{margin-top:10px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.escala .er{border-bottom:1px solid var(--line);padding:9px 11px;font-size:11.5px;line-height:1.35}
+.escala .er:last-child{border-bottom:none}
+.escala .en{display:inline-block;font-family:'Oswald';font-weight:700;color:var(--pink);font-size:15px;margin-bottom:3px}
+.escala .ed{margin:2px 0;color:var(--muted)}
+.escala .ed b{color:var(--ink)}
 .prombox{margin-top:14px;background:var(--panel2);border:1.5px solid var(--pink);border-radius:12px;padding:12px;text-align:center}
 .prombox .v{font-family:'Oswald';font-weight:700;font-size:30px;color:var(--pink)}
 .prombox .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
@@ -122,6 +133,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--pink)}
       <div><div class="modal-lbl" style="margin-top:0">Física</div><input type="number" id="ed-notaFis" min="1" max="7" step="0.1" inputmode="decimal"></div>
       <div><div class="modal-lbl" style="margin-top:0">Actitudinal</div><input type="number" id="ed-notaAct" min="1" max="7" step="0.1" inputmode="decimal"></div>
     </div>
+    <div id="ed-escala-tag" class="escala-tag"></div>
+    <div id="ed-guia" class="guia hidden"></div>
+    <button type="button" class="btn btn-ghost" id="ed-verescala" style="margin-top:10px;padding:10px;font-size:12px">Ver escala completa</button>
+    <div id="ed-escala" class="escala hidden"></div>
     <div class="prombox"><div class="v" id="ed-prom">—</div><div class="l">Promedio (automático)</div></div>
     <div class="modal-lbl">Comentario / observación</div>
     <textarea id="ed-comentario" rows="4" placeholder="Escribe la observación del jugador..."></textarea>
@@ -221,6 +236,52 @@ function renderLista(sede,cat){
   document.querySelectorAll('.pl').forEach(el=>el.onclick=()=>abrirEdit(+el.dataset.i));
 }
 
+/* ── Escalas de evaluación (rúbricas) ── */
+const RUBRICA={
+ COMP:{ nombre:'Competitivo → Alto Rendimiento',
+  tec:['','Dificultades para controlar el balón; no comprende conceptos tácticos básicos.','Técnica básica limitada; errores frecuentes en decisiones de juego.','Ejecuta técnica con dificultad bajo presión; táctica aún mecánica.','Técnica útil en contextos controlados; reconoce espacios y funciones tácticas.','Ejecuta con confianza bajo presión; tácticamente adaptable en partido.','Técnica pulida; decisiones efectivas y anticipadas; cumple funciones tácticas con solvencia.','Dominio técnico en situaciones exigentes; liderazgo táctico en cancha.'],
+  fis:['','Baja resistencia, fuerza y velocidad; fatiga rápida.','Rendimiento físico inestable; problemas para mantener la intensidad.','Nivel físico aceptable pero irregular en esfuerzos de alta intensidad.','Buena base física; comienza a resistir demandas competitivas.','Buen nivel aeróbico y fuerza funcional; recuperación rápida.','Alta capacidad física sostenida; explosividad y resistencia equilibradas.','Preparación física óptima para la categoría; destaca en todas las pruebas.'],
+  act:['','Falta de compromiso; actitud pasiva en entrenamientos.','Poco enfoque; escasa responsabilidad en su rol.','Mejora en la disciplina; necesita guía constante.','Asume tareas con más autonomía; responde a retroalimentación.','Mentalidad competitiva emergente; liderazgo ocasional.','Alta motivación; cumple objetivos; modelo para compañeros.','Profesionalismo evidente; listo para entornos de alto rendimiento.'],
+  interp:'4 o menos: aún en etapa formativa. · 5: umbral de rendimiento competitivo, seguimiento cercano. · 6-7: listo para consolidarse en alto rendimiento.'
+ },
+ AR:{ nombre:'Alto Rendimiento → Proyecto Profesional',
+  tec:['','Dificultades para sostener la técnica bajo presión profesional; decisiones lentas y erráticas.','Técnica intermitente en juego real; aplica conceptos tácticos de forma rígida.','Ejecuta con solidez en situaciones controladas; comienza a responder ante exigencias tácticas reales.','Técnica y visión de juego útiles en contextos profesionales; responde con lógica táctica.','Seguridad técnica en ritmo profesional; se adapta a distintos sistemas de juego.','Alta eficiencia técnica en velocidad de juego profesional; decisiones precisas.','Control absoluto del balón en cualquier contexto; influencia táctica dominante.'],
+  fis:['','No alcanza el estándar físico profesional; fatiga en esfuerzos prolongados.','Desempeño físico inestable en tareas de alta intensidad o frecuencia competitiva.','Capacidad física adecuada, con dificultad para sostener ritmo profesional sostenido.','Buen desarrollo físico general; responde a la mayoría de exigencias competitivas.','Fuerte capacidad física con buena recuperación; rendimiento estable en entrenamientos y partidos.','Potencia, resistencia y agilidad de nivel profesional; rendimiento consistente.','Condición física igual o superior a estándares profesionales; se impone en pruebas y partidos.'],
+  act:['','Desconexión con las exigencias del entorno profesional; falta de responsabilidad deportiva.','Motivación variable; necesita supervisión constante para sostener la disciplina.','Mejora en hábitos extradeportivos; actitud positiva pero dependiente de estímulos externos.','Muestra autonomía en la preparación diaria; responde a desafíos con compromiso.','Mentalidad competitiva clara; asume responsabilidades y muestra liderazgo emergente.','Enfoque maduro y profesional; referente dentro del grupo.','Actitud profesional consolidada; preparado mental y emocionalmente para competir al más alto nivel.'],
+  interp:'4 o menos: fortalecer áreas clave antes de una posible inclusión profesional. · 5: umbral profesional, seguimiento individualizado. · 6-7: proyectable a estructuras profesionales / planteles de élite.'
+ }
+};
+function scaleKey(){ const v=($('ed-nivel').value||'').toUpperCase(); if(v.indexOf('A.R')>=0||v.indexOf('ALTO')>=0)return'AR'; if(v.indexOf('COMP')>=0)return'COMP'; return''; }
+function nota1a7(id){ const n=parseFloat(String($(id).value).replace(',','.')); if(isNaN(n))return 0; const r=Math.round(n); return (r>=1&&r<=7)?r:0; }
+function renderEscala(k){
+  const R=RUBRICA[k]; let h='';
+  for(let i=1;i<=7;i++){
+    h+='<div class="er"><div class="en">'+i+'</div>'+
+      '<div class="ed"><b>Técnica:</b> '+esc(R.tec[i])+'</div>'+
+      '<div class="ed"><b>Física:</b> '+esc(R.fis[i])+'</div>'+
+      '<div class="ed"><b>Actitud:</b> '+esc(R.act[i])+'</div></div>';
+  }
+  h+='<div class="er">'+esc(R.interp)+'</div>';
+  $('ed-escala').innerHTML=h;
+}
+function updGuia(){
+  const k=scaleKey(), tag=$('ed-escala-tag'), guia=$('ed-guia'), box=$('ed-escala');
+  if(!k){ tag.textContent='Elige el Nivel del jugador para ver su escala de evaluación.'; guia.classList.add('hidden'); box.classList.add('hidden'); $('ed-verescala').textContent='Ver escala completa'; return; }
+  const R=RUBRICA[k];
+  tag.textContent='Escala: '+R.nombre;
+  const rows=[['Técnica','tec','ed-notaTec'],['Física','fis','ed-notaFis'],['Actitudinal','act','ed-notaAct']];
+  let h='';
+  rows.forEach(r=>{ const n=nota1a7(r[2]); if(n) h+='<div class="gl"><b>'+r[0]+' ('+n+'):</b> '+esc(R[r[1]][n])+'</div>'; });
+  if(h){ guia.innerHTML=h; guia.classList.remove('hidden'); } else guia.classList.add('hidden');
+  if(!box.classList.contains('hidden')) renderEscala(k);
+}
+$('ed-verescala').onclick=()=>{
+  const k=scaleKey(), box=$('ed-escala');
+  if(!k){ toast('Primero elige el Nivel'); return; }
+  if(box.classList.contains('hidden')){ renderEscala(k); box.classList.remove('hidden'); $('ed-verescala').textContent='Ocultar escala'; }
+  else { box.classList.add('hidden'); $('ed-verescala').textContent='Ver escala completa'; }
+};
+
 /* ── Modal editar ── */
 function fillSelect(id,opts,val){
   const cur=val||'';
@@ -243,7 +304,8 @@ function abrirEdit(i){
   $('ed-notaFis').value=p.notaFis||'';
   $('ed-notaAct').value=p.notaAct||'';
   $('ed-comentario').value=p.comentario||'';
-  calcProm();
+  $('ed-escala').classList.add('hidden'); $('ed-verescala').textContent='Ver escala completa';
+  calcProm(); updGuia();
   $('ed-modal').classList.remove('hidden');
 }
 function calcProm(){
@@ -252,7 +314,8 @@ function calcProm(){
   let m=vals.reduce((s,x)=>s+x,0)/vals.length; m=Math.round(m*10)/10; if(m<1)m=1; if(m>7)m=7;
   $('ed-prom').textContent=m.toFixed(1); return m;
 }
-['ed-notaTec','ed-notaFis','ed-notaAct'].forEach(id=>$(id).addEventListener('input',calcProm));
+['ed-notaTec','ed-notaFis','ed-notaAct'].forEach(id=>$(id).addEventListener('input',()=>{ calcProm(); updGuia(); }));
+$('ed-nivel').addEventListener('change',updGuia);
 $('ed-cerrar').onclick=()=>{ $('ed-modal').classList.add('hidden'); EDIT_I=null; };
 $('ed-modal').addEventListener('click',e=>{ if(e.target===$('ed-modal')){ $('ed-modal').classList.add('hidden'); EDIT_I=null; } });
 
