@@ -375,7 +375,7 @@ function playerHTML(p,i){
   html+='<button class="mk-obs" data-i="'+i+'" title="Observación del entrenador">O</button>';
   html+='</div>';
   if(marca==='F'){
-    const msg=encodeURIComponent('Buenas Tardes. Quisiéramos saber por qué '+p.nombre+' no asistió al entrenamiento hoy.');
+    const msg=encodeURIComponent('Hola. Quisiéramos saber por qué '+p.nombre+' no asistió al entrenamiento hoy.');
     const tj=waNum(p.telJug), ta=waNum(p.telApo);
     let wa='';
     if(tj) wa+='<a class="mk-wa" href="https://wa.me/'+tj+'?text='+msg+'" target="_blank" rel="noopener" title="WhatsApp al jugador">📱 Jugador</a>';
