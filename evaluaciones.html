@@ -36,7 +36,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--pink)}
 .pl .info{flex:1;min-width:0}
 .pl .pn{font-weight:600;font-size:15px;line-height:1.25}
 .pl .pmeta{font-size:11px;color:var(--muted2);margin-top:2px}
-.prom{font-family:'Oswald';font-weight:700;font-size:20px;min-width:52px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--panel2);border:1.5px solid var(--line)}
+.promwrap{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0}
+.promcap{font-size:8.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted2);font-weight:600}
+.prom{font-family:'Oswald';font-weight:700;font-size:20px;min-width:56px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--panel2);border:1.5px solid var(--line)}
 .prom.g6{background:rgba(255,46,147,.14);border-color:var(--pink);color:var(--pink)}
 .prom.g5{background:rgba(39,194,129,.14);border-color:var(--ok);color:var(--ok)}
 .prom.g4{background:rgba(255,176,32,.14);border-color:var(--warn);color:var(--warn)}
@@ -202,6 +204,7 @@ $('btn-cargar').onclick = async ()=>{
   }catch(e){ $('lista').innerHTML='<div class="loader">No se pudo cargar.</div>'; }
 };
 
+function fmtProm(v){ const n=parseFloat(String(v).replace(',','.')); if(isNaN(n))return'—'; return (Math.round(n*10)/10).toFixed(1); }
 function promClass(v){ const n=parseFloat(String(v).replace(',','.')); if(isNaN(n))return''; if(n>=6)return'g6'; if(n>=5)return'g5'; if(n>=4)return'g4'; return'g0'; }
 function estBadge(e){ e=(e||'').toUpperCase(); if(e==='NEW')return' <span class="est new">NEW</span>'; if(e==='FULL')return' <span class="est full">FULL</span>'; return''; }
 
@@ -212,7 +215,8 @@ function renderLista(sede,cat){
     ROSTER.map((p,i)=>'<div class="pl" data-i="'+i+'">'+
       '<div class="info"><div class="pn">'+esc(p.nombre)+estBadge(p.estado)+'</div>'+
       '<div class="pmeta">'+esc(p.posPrin||'—')+(p.nivel?(' · '+esc(p.nivel)):'')+'</div></div>'+
-      '<div class="prom '+promClass(p.promedio)+'">'+(p.promedio||'—')+'</div>'+
+      '<div class="promwrap"><div class="promcap">Promedio</div>'+
+      '<div class="prom '+promClass(p.promedio)+'">'+fmtProm(p.promedio)+'</div></div>'+
     '</div>').join('');
   document.querySelectorAll('.pl').forEach(el=>el.onclick=()=>abrirEdit(+el.dataset.i));
 }
