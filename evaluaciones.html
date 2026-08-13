@@ -229,7 +229,7 @@ function renderLista(sede,cat){
   $('lista').innerHTML='<div class="cat-head">'+esc(sede)+' · '+esc(cat)+'</div>'+
     ROSTER.map((p,i)=>'<div class="pl" data-i="'+i+'">'+
       '<div class="info"><div class="pn">'+esc(p.nombre)+estBadge(p.estado)+'</div>'+
-      '<div class="pmeta">'+esc(p.posPrin||'—')+(p.nivel?(' · '+esc(p.nivel)):'')+'</div></div>'+
+      '<div class="pmeta">'+[p.posPrin,p.nivel,p.subnivel].filter(Boolean).map(esc).join(' · ')+'</div></div>'+
       '<div class="promwrap"><div class="promcap">Promedio</div>'+
       '<div class="prom '+promClass(p.promedio)+'">'+fmtProm(p.promedio)+'</div></div>'+
     '</div>').join('');
