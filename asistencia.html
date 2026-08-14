@@ -117,6 +117,7 @@ input:focus,select:focus{border-color:var(--pink)}
 
   <div id="roster-wrap" class="hidden">
     <button class="btn btn-ghost" id="btn-repoent" style="margin-bottom:12px">📋 Reporte del Entrenamiento</button>
+    <button class="btn btn-ghost" id="btn-noinscrito" style="margin-bottom:12px">➕ Jugadores No Inscritos</button>
     <div class="field hidden" id="cat-filter-wrap">
       <label>Filtrar por categoría</label>
       <select id="cat-filter"><option value="">Todas las categorías</option></select>
@@ -204,6 +205,30 @@ input:focus,select:focus{border-color:var(--pink)}
   </div>
 </div>
 
+<!-- MODAL JUGADORES NO INSCRITOS -->
+<div class="modal-bg hidden" id="ni-modal">
+  <div class="modal">
+    <div class="modal-h">Jugadores No Inscritos</div>
+    <div class="modal-name" style="color:var(--muted);font-weight:400;font-size:13px">Registra un jugador que aún no está inscrito.</div>
+    <div class="modal-lbl">Nombre y apellido</div>
+    <input type="text" id="ni-nombre" class="modal-sel" placeholder="Ej: Juan Pérez">
+    <div style="display:flex;gap:10px">
+      <div style="flex:1"><div class="modal-lbl">Año</div><input type="number" id="ni-ano" class="modal-sel" placeholder="Ej: 2013"></div>
+      <div style="flex:1"><div class="modal-lbl">Categoría</div><select id="ni-cat" class="modal-sel"><option value="">—</option></select></div>
+    </div>
+    <div class="modal-lbl">Sede</div>
+    <select id="ni-sede" class="modal-sel"><option value="">—</option></select>
+    <div class="modal-lbl">Teléfono apoderado</div>
+    <input type="tel" id="ni-tel" class="modal-sel" placeholder="Ej: 9 1234 5678">
+    <div class="modal-lbl">Entrenador</div>
+    <select id="ni-ent" class="modal-sel af-coaches"><option value="">— Selecciona —</option></select>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="ni-cerrar">Cerrar</button>
+      <button class="btn" id="ni-guardar">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL REPORTE DEL ENTRENAMIENTO -->
 <div class="modal-bg hidden" id="repo-modal">
   <div class="modal">
@@ -270,6 +295,7 @@ const fbAuth = firebase.auth();
 
 const $ = id => document.getElementById(id);
 let ROSTER = [];
+let CONFIG_SEDES = [];
 const MARCAS = ['OK','F','J','L'];
 
 function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
@@ -321,6 +347,7 @@ async function cargarConfig(){
     const res=await fetch(API_ASIS+'?action=config&idToken='+encodeURIComponent(t),{cache:'no-store'});
     const data=await res.json();
     if(data.error){ showErr('app-err',data.error); return; }
+    CONFIG_SEDES=data.sedes||[];
     const sel=$('sedecat');
     const bySede={};
     (data.sedes||[]).forEach(x=>{ (bySede[x.sede]=bySede[x.sede]||[]).push(x.categoria); });
@@ -500,6 +527,37 @@ const AF_COACHES=['JOSÉ ALMUNA','ESTEBAN TORRES','GONZALO OPAZO','AGUSTIN SQUEL
 document.querySelectorAll('.af-coaches').forEach(sel=>{
   sel.insertAdjacentHTML('beforeend', AF_COACHES.map(n=>'<option>'+n+'</option>').join(''));
 });
+
+/* ── Jugadores No Inscritos ── */
+function abrirNoInscrito(){
+  const sedes=[...new Set(CONFIG_SEDES.map(x=>x.sede).filter(Boolean))];
+  const cats=[...new Set(CONFIG_SEDES.map(x=>x.categoria).filter(Boolean))];
+  const sc=($('sedecat').value||'').split('||');
+  $('ni-sede').innerHTML='<option value="">—</option>'+sedes.map(s=>'<option'+(s===sc[0]?' selected':'')+'>'+s+'</option>').join('');
+  $('ni-cat').innerHTML='<option value="">—</option>'+cats.map(c=>'<option'+(c===sc[1]?' selected':'')+'>'+c+'</option>').join('');
+  $('ni-nombre').value=''; $('ni-ano').value=''; $('ni-tel').value=''; $('ni-ent').value='';
+  $('ni-modal').classList.remove('hidden');
+}
+$('btn-noinscrito').onclick=abrirNoInscrito;
+$('ni-cerrar').onclick=()=>$('ni-modal').classList.add('hidden');
+$('ni-modal').addEventListener('click',e=>{ if(e.target===$('ni-modal')) $('ni-modal').classList.add('hidden'); });
+$('ni-guardar').onclick=async ()=>{
+  const nombre=$('ni-nombre').value.trim();
+  if(!nombre){ toast('Escribe el nombre'); return; }
+  if(!$('ni-sede').value||!$('ni-cat').value){ toast('Elige sede y categoría'); return; }
+  if(!$('ni-ent').value){ toast('Selecciona el entrenador'); return; }
+  const body={action:'noinscrito', nombre:nombre, ano:$('ni-ano').value.trim(), categoria:$('ni-cat').value,
+    sede:$('ni-sede').value, telApo:$('ni-tel').value.trim(), entrenador:$('ni-ent').value};
+  $('ni-guardar').disabled=true; $('ni-guardar').textContent='Guardando...';
+  try{
+    body.idToken=await token();
+    const res=await fetch(API_ASIS,{method:'POST',body:JSON.stringify(body)});
+    const data=await res.json();
+    if(data.error) toast('Error: '+data.error); else { toast('Jugador registrado'); $('ni-modal').classList.add('hidden'); }
+  }catch(e){ toast('No se pudo guardar.'); }
+  $('ni-guardar').disabled=false; $('ni-guardar').textContent='Guardar';
+};
+
 function repoConteo(){
   const c={OK:0,F:0,J:0,L:0};
   ROSTER.forEach(p=>{ const m=(p.marca||'').toUpperCase(); if(m in c) c[m]++; });
