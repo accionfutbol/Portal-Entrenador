@@ -357,14 +357,23 @@ async function cargarConfig(){
       bySede[sede].forEach(cat=>{ html+='<option value="'+sede+'||'+cat+'">'+sede+' - '+cat+'</option>'; });
       html+='</optgroup>';
     });
+    html+='<optgroup label="SENIOR"><option value="SENIOR||AM">SENIOR - AM</option><option value="SENIOR||PM">SENIOR - PM</option></optgroup>';
     sel.innerHTML=html;
   }catch(e){ showErr('app-err','No se pudo cargar la configuracion.'); }
+}
+function esSenior(){ return ($('sedecat').value||'').indexOf('SENIOR||')===0; }
+function setSeniorUI(on){
+  ['btn-repoent','btn-noinscrito','cat-filter-wrap','summary','cat-totales'].forEach(id=>{
+    const el=$(id); if(el) el.style.display = on ? 'none' : '';
+  });
 }
 
 $('btn-cargar').onclick = async ()=>{
   hideErr('app-err');
   const val=$('sedecat').value, fecha=$('fecha').value||todayStr();
   if(!val){ showErr('app-err','Elige sede y categoria.'); return; }
+  if(esSenior()){ await cargarSenior(val.split('||')[1], fecha); return; }
+  setSeniorUI(false);
   const parts=val.split('||'), sede=parts[0], cat=parts[1];
   $('btn-cargar').disabled=true; $('roster').innerHTML='<div class="loader">Cargando lista...</div>'; $('roster-wrap').classList.remove('hidden');
   try{
@@ -380,6 +389,44 @@ $('btn-cargar').onclick = async ()=>{
   }catch(e){ showErr('app-err','No se pudo cargar la lista.'); $('roster').innerHTML=''; }
   $('btn-cargar').disabled=false;
 };
+
+/* ── SENIOR (AM/PM) integrado ── */
+async function cargarSenior(turno,fecha){
+  setSeniorUI(true);
+  $('roster-wrap').classList.remove('hidden');
+  $('roster').innerHTML='<div class="loader">Cargando lista...</div>';
+  $('btn-cargar').disabled=true;
+  try{
+    const t=await token();
+    const q='?action=srroster&turno='+encodeURIComponent(turno)+'&fecha='+encodeURIComponent(fecha)+'&idToken='+encodeURIComponent(t);
+    const res=await fetch(API_ASIS+q,{cache:'no-store'});
+    const data=await res.json();
+    if(data.error){ showErr('app-err',data.error); $('roster').innerHTML=''; $('savebar').classList.add('hidden'); $('btn-cargar').disabled=false; return; }
+    ROSTER=data.jugadores||[];
+    renderSenior();
+    $('savebar').classList.remove('hidden');
+  }catch(e){ showErr('app-err','No se pudo cargar la lista.'); $('roster').innerHTML=''; }
+  $('btn-cargar').disabled=false;
+}
+function renderSenior(){
+  const ok=ROSTER.filter(p=>p.marca==='OK').length, f=ROSTER.filter(p=>p.marca==='F').length;
+  let html='<div class="cat-tot"><div class="th">Asistencia Senior</div>'+
+    '<div class="row"><span>Asistieron</span><b style="color:var(--ok)">'+ok+'</b></div>'+
+    '<div class="row"><span>Faltaron</span><b style="color:var(--red)">'+f+'</b></div>'+
+    '<div class="row"><span>Total</span><b>'+ROSTER.length+'</b></div></div>';
+  ROSTER.forEach((p,i)=>{
+    html+='<div class="player"><div class="pname"><div class="pn">'+esc(p.nombre)+'</div>'+(p.estado?'<div class="prut">'+esc(p.estado)+'</div>':'')+'</div><div class="marks">'+
+      '<button class="mk ok'+(p.marca==='OK'?' on':'')+'" data-i="'+i+'" data-m="OK">OK</button>'+
+      '<button class="mk f'+(p.marca==='F'?' on':'')+'" data-i="'+i+'" data-m="F">F</button>'+
+    '</div></div>';
+  });
+  $('roster').innerHTML=html;
+  $('roster').querySelectorAll('.mk').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.i, m=b.dataset.m;
+    ROSTER[i].marca=(ROSTER[i].marca===m)?'':m;
+    renderSenior();
+  });
+}
 
 let CAT_FILTER='';
 function buildCatFilter(){
@@ -644,13 +691,20 @@ function updateSummary(){
 $('btn-guardar').onclick = async ()=>{
   const val=$('sedecat').value, fecha=$('fecha').value||todayStr();
   if(!val){ toast('Elige sede y categoria'); return; }
-  const parts=val.split('||'), sede=parts[0], cat=parts[1];
-  const marcas=ROSTER.filter(p=>p.marca).map(p=>({row:p.row,marca:p.marca}));
-  if(!marcas.length){ toast('No hay marcas para guardar'); return; }
   $('btn-guardar').disabled=true; $('btn-guardar').textContent='Guardando...';
   try{
     const t=await token();
-    const res=await fetch(API_ASIS,{method:'POST',body:JSON.stringify({action:'save',idToken:t,sede:sede,cat:cat,fecha:fecha,marcas:marcas})});
+    let res;
+    if(esSenior()){
+      const turno=val.split('||')[1];
+      const marcas=ROSTER.map(p=>({row:p.row,marca:p.marca}));   // envía todos (OK/F/vacío)
+      res=await fetch(API_ASIS,{method:'POST',body:JSON.stringify({action:'srsave',idToken:t,turno:turno,fecha:fecha,marcas:marcas})});
+    } else {
+      const parts=val.split('||'), sede=parts[0], cat=parts[1];
+      const marcas=ROSTER.filter(p=>p.marca).map(p=>({row:p.row,marca:p.marca}));
+      if(!marcas.length){ toast('No hay marcas para guardar'); $('btn-guardar').disabled=false; $('btn-guardar').textContent='Guardar asistencia'; return; }
+      res=await fetch(API_ASIS,{method:'POST',body:JSON.stringify({action:'save',idToken:t,sede:sede,cat:cat,fecha:fecha,marcas:marcas})});
+    }
     const data=await res.json();
     if(data.error){ toast('Error: '+data.error); }
     else{ toast('Guardado ('+data.escritos+' jugadores)'); }
