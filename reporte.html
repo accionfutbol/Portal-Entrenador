@@ -332,11 +332,11 @@ function render(c, rep){
   h+='<div class="estado">';
   if(urg.length){
     h+='<div class="est-h est-urg">&#9888; Alertas — comunicarse URGENTEMENTE</div>';
-    urg.forEach(p=>{ h+='<div class="est-card urg">&#9888; <b>'+esc(p.nombre)+'</b> — ALERTA — '+p.F+' inasistencias — COMUNICARSE URGENTEMENTE'+waBtns(p)+'</div>'; });
+    urg.forEach(p=>{ h+='<div class="est-card urg">&#9888; <b>'+esc(p.nombre)+'</b>'+estBadgeRep(p.estado)+' — ALERTA — '+p.F+' inasistencias — COMUNICARSE URGENTEMENTE'+waBtns(p)+'</div>'; });
   }
   if(mod.length){
     h+='<div class="est-h est-mod">Comunicarse con el jugador</div>';
-    mod.forEach(p=>{ h+='<div class="est-card mod"><b>'+esc(p.nombre)+'</b> — '+p.F+' inasistencias ('+p.J+' justificada'+(p.J>1?'s':'')+') — no es grave, pero comunicarse con el jugador'+waBtns(p)+'</div>'; });
+    mod.forEach(p=>{ h+='<div class="est-card mod"><b>'+esc(p.nombre)+'</b>'+estBadgeRep(p.estado)+' — '+p.F+' inasistencias ('+p.J+' justificada'+(p.J>1?'s':'')+') — no es grave, pero comunicarse con el jugador'+waBtns(p)+'</div>'; });
   }
   if(!urg.length && !mod.length){
     h+='<div class="est-card okc">&#10003; Todos los jugadores asisten con normalidad.</div>';
@@ -346,9 +346,9 @@ function render(c, rep){
   h+='</div>';
 
   // ── Listas desplegables F / J / L ──
-  h+=collap('F','No asistieron','#ff4d5e', jug.filter(p=>p.F>0).map(p=>({n:p.nombre,c:p.F,alerta:p.F>=2})));
-  h+=collap('J','Justificados','#ffb020', jug.filter(p=>p.J>0).map(p=>({n:p.nombre,c:p.J,motivos:p.motivos||[]})));
-  h+=collap('L','Lesionados','#64c8ff', jug.filter(p=>p.L>0).map(p=>({n:p.nombre,c:p.L,motivos:p.motivosL||[]})));
+  h+=collap('F','No asistieron','#ff4d5e', jug.filter(p=>p.F>0).map(p=>({n:p.nombre,e:p.estado,c:p.F,alerta:p.F>=2})));
+  h+=collap('J','Justificados','#ffb020', jug.filter(p=>p.J>0).map(p=>({n:p.nombre,e:p.estado,c:p.J,motivos:p.motivos||[]})));
+  h+=collap('L','Lesionados','#64c8ff', jug.filter(p=>p.L>0).map(p=>({n:p.nombre,e:p.estado,c:p.L,motivos:p.motivosL||[]})));
 
   h+='</div>';
   $('result').innerHTML=h;
@@ -362,7 +362,7 @@ function collap(letra,titulo,color,items){
   const body=items.length
     ? '<ul>'+items.map(p=>{
         const mot=(p.motivos&&p.motivos.length)?'<div class="mot">'+[...new Set(p.motivos)].map(m=>'&#8226; '+esc(m)).join('<br>')+'</div>':'';
-        return '<li><div class="linfo"><span>'+(p.alerta?'&#9888; ':'')+esc(p.n)+'</span>'+mot+'</div><span class="cnt" style="color:'+color+'">'+p.c+'</span></li>';
+        return '<li><div class="linfo"><span>'+(p.alerta?'&#9888; ':'')+esc(p.n)+estBadgeRep(p.e)+'</span>'+mot+'</div><span class="cnt" style="color:'+color+'">'+p.c+'</span></li>';
       }).join('')+'</ul>'
     : '<div class="collap-empty">Sin jugadores.</div>';
   return '<div class="collap"><div class="collap-h" style="border-left-color:'+color+'" onclick="toggleCollap(\''+id+'\')">'+
