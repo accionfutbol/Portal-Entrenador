@@ -257,8 +257,7 @@ function estBadgeRep(e){
 }
 function filasRep(jug){
   REP_JUG=jug||[];
-  REP_JUG.forEach((p,i)=>{ if(p.num==null) p.num=i+1; });   // número estático (no cambia al ordenar)
-  return REP_JUG.map((p,i)=>'<tr class="rep-row" data-i="'+i+'"><td class="tnum">'+p.num+'</td><td class="tj">'+esc(p.nombre)+estBadgeRep(p.estado)+'</td>'+
+  return REP_JUG.map((p,i)=>'<tr class="rep-row" data-i="'+i+'"><td class="tnum">'+(i+1)+'</td><td class="tj">'+esc(p.nombre)+estBadgeRep(p.estado)+'</td>'+
     '<td class="c-ok">'+(p.OK||'')+'</td>'+
     '<td class="c-f">'+(p.F||'')+'</td>'+
     '<td class="c-j">'+(p.J||'')+'</td>'+
