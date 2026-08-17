@@ -58,6 +58,8 @@ input:focus,select:focus{border-color:var(--pink)}
 .rtab{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
 .rtab th,.rtab td{border:1px solid var(--line);padding:8px 6px;text-align:center}
 .rtab th.tj,.rtab td.tj{text-align:left}
+.rtab th.tnum,.rtab td.tnum{width:34px;color:var(--muted2);font-family:'Oswald';font-weight:700}
+.estbadge{display:inline-block;font-size:9px;font-weight:700;border:1px solid;border-radius:5px;padding:1px 5px;margin-left:6px;vertical-align:middle;white-space:nowrap;letter-spacing:.02em}
 .rtab thead th{font-family:'Oswald';font-size:12px;letter-spacing:.04em}
 .rtab th.tok{background:rgba(39,194,129,.18);color:var(--ok)}
 .rtab th.tf{background:rgba(255,77,94,.18);color:var(--red)}
@@ -241,9 +243,22 @@ function waBtns(p){
 
 let REP_SORT={campo:null,dir:'desc'};
 let REP_JUG=[];
+function estBadgeRep(e){
+  e=String(e==null?'':e).trim(); if(!e) e='SIN ESTADO';
+  const u=e.toUpperCase(); let c='#5c5c66';
+  if(u.indexOf('DESACTIV')>=0) c='#ff4d5e';
+  else if(u.indexOf('ACTIV')>=0) c='#27c281';
+  else if(u==='NEW') c='#64c8ff';
+  else if(u==='FULL') c='#ff2e93';
+  else if(u.indexOf('LESION')>=0) c='#64c8ff';
+  else if(u.indexOf('RECESO')>=0) c='#ffb020';
+  else if(u.indexOf('CIERRE')>=0) c='#9a9aa3';
+  return '<span class="estbadge" style="color:'+c+';border-color:'+c+'">'+esc(e)+'</span>';
+}
 function filasRep(jug){
   REP_JUG=jug||[];
-  return REP_JUG.map((p,i)=>'<tr class="rep-row" data-i="'+i+'"><td class="tj">'+esc(p.nombre)+'</td>'+
+  REP_JUG.forEach((p,i)=>{ if(p.num==null) p.num=i+1; });   // número estático (no cambia al ordenar)
+  return REP_JUG.map((p,i)=>'<tr class="rep-row" data-i="'+i+'"><td class="tnum">'+p.num+'</td><td class="tj">'+esc(p.nombre)+estBadgeRep(p.estado)+'</td>'+
     '<td class="c-ok">'+(p.OK||'')+'</td>'+
     '<td class="c-f">'+(p.F||'')+'</td>'+
     '<td class="c-j">'+(p.J||'')+'</td>'+
@@ -303,7 +318,7 @@ function render(c, rep){
 
   // ── Tabla jugador × OK/F/J/L (encabezados ordenables) ──
   REP_SORT={campo:null,dir:'desc'};
-  h+='<table class="rtab"><thead><tr><th class="tj">JUGADOR</th>'+
+  h+='<table class="rtab"><thead><tr><th class="tnum">#</th><th class="tj">JUGADOR ('+ (jug?jug.length:0) +')</th>'+
      '<th class="tok" style="cursor:pointer;user-select:none" onclick="sortRep(\'OK\')">OK<span class="arr" id="arr-OK"></span></th>'+
      '<th class="tf" style="cursor:pointer;user-select:none" onclick="sortRep(\'F\')">F<span class="arr" id="arr-F"></span></th>'+
      '<th class="tju" style="cursor:pointer;user-select:none" onclick="sortRep(\'J\')">J<span class="arr" id="arr-J"></span></th>'+
