@@ -172,6 +172,7 @@ input:focus,select:focus{border-color:var(--pink)}
       <option>CAMBIO DE CATEGORIA</option>
       <option>CAMBIO DE NIVEL</option>
       <option>NUNCA ASISTIO A LOS ENTRENAMIENTOS</option>
+      <option>LESIONADO</option>
     </select>
     <div id="obs-cat-wrap" class="hidden">
       <div class="modal-lbl">Cambiar a la categoría</div>
@@ -181,6 +182,10 @@ input:focus,select:focus{border-color:var(--pink)}
         <option>SUB16</option>
         <option>SUB14</option>
       </select>
+    </div>
+    <div id="obs-lesion-wrap" class="hidden">
+      <div class="modal-lbl">Motivo de la lesión</div>
+      <textarea id="obs-lesion" class="modal-ta" placeholder="Describe la lesión del jugador (zona, cómo pasó, etc.)"></textarea>
     </div>
     <div class="modal-lbl">Entrenador que informa</div>
     <select id="obs-ent" class="modal-sel">
@@ -237,7 +242,10 @@ input:focus,select:focus{border-color:var(--pink)}
       <div style="flex:1"><div class="modal-lbl">Sede</div><div class="modal-form" id="repo-sede">—</div></div>
       <div style="flex:1"><div class="modal-lbl">Categoría</div><div class="modal-form" id="repo-cat">—</div></div>
     </div>
-    <div class="modal-lbl">Fecha</div><div class="modal-form" id="repo-fecha">—</div>
+    <div style="display:flex;gap:10px">
+      <div style="flex:1"><div class="modal-lbl">Fecha</div><div class="modal-form" id="repo-fecha">—</div></div>
+      <div style="flex:1"><div class="modal-lbl">Total jugadores</div><div class="modal-form" id="repo-total" style="font-weight:800;text-align:center">0</div></div>
+    </div>
     <div style="display:flex;gap:8px">
       <div style="flex:1"><div class="modal-lbl">Asistieron</div><div class="modal-form" id="repo-asist" style="color:var(--ok);font-weight:800;text-align:center">0</div></div>
       <div style="flex:1"><div class="modal-lbl">Faltaron</div><div class="modal-form" id="repo-falt" style="color:var(--red);font-weight:800;text-align:center">0</div></div>
@@ -447,7 +455,7 @@ function playerHTML(p,i){
   let html='<div class="player"><div class="pname"><div class="pn">'+esc(p.nombre)+'</div>'+(p.rut?'<div class="prut">'+esc(p.rut)+'</div>':'')+'</div><div class="marks">';
   MARCAS.forEach(m=>{ html+='<button class="mk '+m.toLowerCase()+(marca===m?' on':'')+'" data-i="'+i+'" data-m="'+m+'">'+m+'</button>'; });
   if(marca==='J') html+='<button class="mk-mot" data-i="'+i+'" title="Ver / escribir motivo">'+(p.opcion?'💬✓':'💬')+'</button>';
-  html+='<button class="mk-obs" data-i="'+i+'" title="Observación del entrenador">O</button>';
+  html+='<button class="mk-obs" data-i="'+i+'" title="Observación del entrenador">OBS</button>';
   html+='</div>';
   if(marca==='F'){
     const msg=encodeURIComponent('Hola. Como estas? Quisiéramos saber por qué '+p.nombre+' no pudiste asistir al entrenamiento hoy. Favor recuerda realizar el formulario de inasistencia https://bit.ly/justificacioninasistenciaaf');
@@ -538,12 +546,17 @@ function abrirObs(i){
   $('obs-nombre').textContent=p.nombre;
   $('obs-sel').value=''; $('obs-ent').value='';
   $('obs-cat').value=''; $('obs-cat-wrap').classList.add('hidden');
+  $('obs-lesion').value=''; $('obs-lesion-wrap').classList.add('hidden');
   $('obs-modal').classList.remove('hidden');
 }
 $('obs-sel').onchange=()=>{
-  const esCambio=$('obs-sel').value==='CAMBIO DE CATEGORIA';
+  const v=$('obs-sel').value;
+  const esCambio=v==='CAMBIO DE CATEGORIA';
+  const esLesion=v==='LESIONADO';
   $('obs-cat-wrap').classList.toggle('hidden', !esCambio);
+  $('obs-lesion-wrap').classList.toggle('hidden', !esLesion);
   if(!esCambio) $('obs-cat').value='';
+  if(!esLesion) $('obs-lesion').value='';
 };
 async function guardarObs(){
   if(OBS_I==null) return;
@@ -553,6 +566,10 @@ async function guardarObs(){
   if(obs==='CAMBIO DE CATEGORIA'){
     if(!$('obs-cat').value){ toast('Selecciona la categoría destino'); return; }
     obs='CAMBIO DE CATEGORIA A '+$('obs-cat').value;
+  }
+  if(obs==='LESIONADO'){
+    if(!$('obs-lesion').value.trim()){ toast('Escribe el motivo de la lesión'); return; }
+    obs='LESIONADO - '+$('obs-lesion').value.trim();
   }
   if(!ent){ toast('Selecciona el entrenador'); return; }
   const val=$('sedecat').value, parts=val.split('||'), sede=parts[0]||'', cat=parts[1]||'';
@@ -618,6 +635,7 @@ function abrirRepo(){
   $('repo-cat').textContent=parts[1]||'—';
   $('repo-fecha').textContent=$('fecha').value||todayStr();
   const k=repoConteo();
+  $('repo-total').textContent=k.total;
   $('repo-asist').textContent=k.asist;
   $('repo-falt').textContent=k.F;
   $('repo-just').textContent=k.J;
@@ -630,6 +648,7 @@ function repoTexto(){
     'Sede: '+$('repo-sede').textContent+'\n'+
     'Categoría: '+$('repo-cat').textContent+'\n'+
     'Fecha: '+$('repo-fecha').textContent+'\n'+
+    'Total jugadores: '+k.total+'\n'+
     'Asistieron: '+k.asist+'\n'+
     'Faltaron: '+k.F+'\n'+
     'Justificaron: '+k.J+'\n'+
@@ -650,7 +669,7 @@ $('repo-guardar').onclick=async ()=>{
     horario:$('repo-horario').value, balones:$('repo-balones').value,
     observacion:$('repo-obs').value, entrenador:$('repo-ent').value,
     enCancha:[$('repo-cancha1').value,$('repo-cancha2').value].filter(Boolean).join(', '),
-    asistieron:k.asist, faltaron:k.F, justificaron:k.J, lesionados:k.L};
+    total:k.total, asistieron:k.asist, faltaron:k.F, justificaron:k.J, lesionados:k.L};
   $('repo-guardar').disabled=true; $('repo-guardar').textContent='Guardando...';
   try{
     body.idToken=await token();
