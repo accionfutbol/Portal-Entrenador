@@ -32,6 +32,7 @@ input:focus,select:focus{border-color:var(--pink)}
 .player{display:flex;flex-direction:column;align-items:stretch;gap:9px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:8px}
 .player .pname{width:100%}
 .player .pn{font-weight:600;font-size:15px;line-height:1.25}
+.est-badge{display:inline-block;font-size:9px;font-weight:700;border:1px solid;border-radius:5px;padding:1px 6px;margin-left:6px;vertical-align:middle;white-space:nowrap;letter-spacing:.02em}
 .player .prut{font-size:11px;color:var(--muted2);margin-top:1px}
 .player .pcat{display:inline-block;font-size:11px;font-weight:600;color:var(--pink);background:rgba(255,46,147,.12);border:1px solid rgba(255,46,147,.3);border-radius:6px;padding:1px 8px;margin-top:4px}
 .cat-head{font-family:'Oswald';font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#fff;background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--pink);border-radius:10px;padding:11px 14px;margin:16px 0 10px}
@@ -450,9 +451,21 @@ function buildCatFilter(){
     CAT_FILTER=''; wrap.classList.add('hidden');
   }
 }
+function estBadge(e){
+  e=String(e==null?'':e).trim(); if(!e) e='SIN ESTADO';
+  const u=e.toUpperCase(); let c='#5c5c66';
+  if(u.indexOf('DESACTIV')>=0) c='#ff4d5e';
+  else if(u.indexOf('ACTIV')>=0) c='#27c281';
+  else if(u==='NEW') c='#64c8ff';
+  else if(u==='FULL') c='#ff2e93';
+  else if(u.indexOf('LESION')>=0) c='#64c8ff';
+  else if(u.indexOf('RECESO')>=0) c='#ffb020';
+  else if(u.indexOf('CIERRE')>=0) c='#9a9aa3';
+  return '<span class="est-badge" style="color:'+c+';border-color:'+c+'">'+esc(e)+'</span>';
+}
 function playerHTML(p,i){
   const marca=(p.marca||'').toUpperCase();
-  let html='<div class="player"><div class="pname"><div class="pn">'+esc(p.nombre)+'</div>'+(p.rut?'<div class="prut">'+esc(p.rut)+'</div>':'')+'</div><div class="marks">';
+  let html='<div class="player"><div class="pname"><div class="pn">'+esc(p.nombre)+estBadge(p.estado)+'</div>'+(p.rut?'<div class="prut">'+esc(p.rut)+'</div>':'')+'</div><div class="marks">';
   MARCAS.forEach(m=>{ html+='<button class="mk '+m.toLowerCase()+(marca===m?' on':'')+'" data-i="'+i+'" data-m="'+m+'">'+m+'</button>'; });
   if(marca==='J') html+='<button class="mk-mot" data-i="'+i+'" title="Ver / escribir motivo">'+(p.opcion?'💬✓':'💬')+'</button>';
   html+='<button class="mk-obs" data-i="'+i+'" title="Observación del entrenador">OBS</button>';
