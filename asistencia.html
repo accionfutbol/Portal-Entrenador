@@ -424,7 +424,7 @@ function renderSenior(){
     '<div class="row"><span>Faltaron</span><b style="color:var(--red)">'+f+'</b></div>'+
     '<div class="row"><span>Total</span><b>'+ROSTER.length+'</b></div></div>';
   ROSTER.forEach((p,i)=>{
-    html+='<div class="player"><div class="pname"><div class="pn">'+esc(p.nombre)+'</div>'+(p.estado?'<div class="prut">'+esc(p.estado)+'</div>':'')+'</div><div class="marks">'+
+    html+='<div class="player"><div class="pname"><div class="pn">'+esc(p.nombre)+estBadge(p.estado)+'</div></div><div class="marks">'+
       '<button class="mk ok'+(p.marca==='OK'?' on':'')+'" data-i="'+i+'" data-m="OK">OK</button>'+
       '<button class="mk f'+(p.marca==='F'?' on':'')+'" data-i="'+i+'" data-m="F">F</button>'+
     '</div></div>';
