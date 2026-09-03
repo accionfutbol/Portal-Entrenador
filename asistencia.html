@@ -428,16 +428,14 @@ function renderSenior(){
       '<button class="mk ok'+(p.marca==='OK'?' on':'')+'" data-i="'+i+'" data-m="OK">OK</button>'+
       '<button class="mk f'+(p.marca==='F'?' on':'')+'" data-i="'+i+'" data-m="F">F</button>'+
     '</div>';
-    if((p.marca||'').toUpperCase()==='F'){
-      const msg=encodeURIComponent('🩷🖤⚽ Hola, '+p.nombre+', crack 👋\n'+
-        'Hoy nos dimos cuenta de que no pudiste asistir al entrenamiento y queríamos escribirte personalmente. 💪⚽\n'+
-        '🔥 No queremos que pierdas el ritmo ni que te desconectes del equipo.\n'+
-        'Cuéntanos, crack: ¿qué pasó hoy? ¿Por qué no pudiste asistir al entrenamiento? 👀');
-      const tn=waNum(p.tel||p.telefono||p.telJug||p.telApo);
-      let wa='';
-      if(tn) wa+='<a class="mk-wa" href="https://wa.me/'+tn+'?text='+msg+'" target="_blank" rel="noopener" title="WhatsApp al jugador">📱 WhatsApp</a>';
-      else   wa+='<a class="mk-wa" href="https://wa.me/?text='+msg+'" target="_blank" rel="noopener" title="WhatsApp (sin número)">📱 WhatsApp</a>';
-      html+='<div class="pwa">'+wa+'</div>';
+    if(p.marca==='F'){
+      const tel=waNum(p.tel);
+      if(tel){
+        const msg=encodeURIComponent('Hola, '+p.nombre+', crack, hoy nos dimos cuenta de que no pudiste asistir al entrenamiento y queríamos escribirte personalmente. No queremos que pierdas el ritmo ni que te desconectes del equipo. Cuéntanos, crack. ¿Qué pasó hoy? ¿Por qué no pudiste asistir entrenamiento?');
+        html+='<div class="pwa"><a class="mk-wa" href="https://wa.me/'+tel+'?text='+msg+'" target="_blank" rel="noopener" title="WhatsApp al jugador">📱 Enviar WhatsApp</a></div>';
+      } else {
+        html+='<div class="pwa"><span style="font-size:11px;color:var(--muted2)">Sin teléfono en la planilla</span></div>';
+      }
     }
     html+='</div>';
   });
