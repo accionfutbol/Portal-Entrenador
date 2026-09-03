@@ -433,11 +433,10 @@ function renderSenior(){
         'Hoy nos dimos cuenta de que no pudiste asistir al entrenamiento y queríamos escribirte personalmente. 💪⚽\n'+
         '🔥 No queremos que pierdas el ritmo ni que te desconectes del equipo.\n'+
         'Cuéntanos, crack: ¿qué pasó hoy? ¿Por qué no pudiste asistir al entrenamiento? 👀');
-      const tj=waNum(p.telJug), ta=waNum(p.telApo);
+      const tn=waNum(p.tel||p.telefono||p.telJug||p.telApo);
       let wa='';
-      if(tj) wa+='<a class="mk-wa" href="https://wa.me/'+tj+'?text='+msg+'" target="_blank" rel="noopener" title="WhatsApp al jugador">📱 Jugador</a>';
-      if(ta) wa+='<a class="mk-wa" href="https://wa.me/'+ta+'?text='+msg+'" target="_blank" rel="noopener" title="WhatsApp al apoderado">📱 Apoderado</a>';
-      if(!wa) wa+='<a class="mk-wa" href="https://wa.me/?text='+msg+'" target="_blank" rel="noopener" title="WhatsApp">📱 WhatsApp</a>';
+      if(tn) wa+='<a class="mk-wa" href="https://wa.me/'+tn+'?text='+msg+'" target="_blank" rel="noopener" title="WhatsApp al jugador">📱 WhatsApp</a>';
+      else   wa+='<a class="mk-wa" href="https://wa.me/?text='+msg+'" target="_blank" rel="noopener" title="WhatsApp (sin número)">📱 WhatsApp</a>';
       html+='<div class="pwa">'+wa+'</div>';
     }
     html+='</div>';
