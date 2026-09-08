@@ -263,6 +263,9 @@ input:focus,select:focus{border-color:var(--pink)}
     </select>
     <div class="modal-lbl">Cantidad de balones</div>
     <input type="number" id="repo-balones" class="modal-sel" min="0" placeholder="Ej: 12">
+    <div class="modal-lbl">Cantidad de jugadores NO en lista de asistencia</div>
+    <input type="number" id="repo-nolista" class="modal-sel" min="0" value="0" placeholder="0">
+    <div id="repo-nolista-cont" class="hidden"></div>
     <div class="modal-lbl">Observación del entrenamiento</div>
     <textarea id="repo-obs" class="modal-ta" placeholder="Escribe cómo estuvo el entrenamiento..."></textarea>
     <div class="modal-lbl">Encargado de reporte</div>
@@ -663,10 +666,12 @@ function abrirRepo(){
   $('repo-falt').textContent=k.F;
   $('repo-just').textContent=k.J;
   $('repo-lesi').textContent=k.L;
+  $('repo-nolista').value='0'; repoNolistaRebuild();
   $('repo-modal').classList.remove('hidden');
 }
 function repoTexto(){
   const k=repoConteo();
+  const nl=repoNolistaData();
   return '📋 REPORTE DE ENTRENAMIENTO — Acción Fútbol\n'+
     'Sede: '+$('repo-sede').textContent+'\n'+
     'Categoría: '+$('repo-cat').textContent+'\n'+
@@ -676,6 +681,7 @@ function repoTexto(){
     'Faltaron: '+k.F+'\n'+
     'Justificaron: '+k.J+'\n'+
     'Lesionados: '+k.L+'\n'+
+    'Jugadores NO en lista: '+nl.n+(nl.list.length?'\n'+nl.list.map((q,i)=>'   '+(i+1)+') '+q.nombre+' — Año '+q.ano+' — Tel '+q.tel).join('\n'):'')+'\n'+
     'Horario: '+($('repo-horario').value||'—')+'\n'+
     'Balones: '+($('repo-balones').value||'—')+'\n'+
     'Observación: '+($('repo-obs').value||'—')+'\n'+
@@ -683,12 +689,51 @@ function repoTexto(){
     'Entrenadores en cancha: '+([$('repo-cancha1').value,$('repo-cancha2').value].filter(Boolean).join(', ')||'—');
 }
 $('btn-repoent').onclick=abrirRepo;
-$('repo-cerrar').onclick=()=>$('repo-modal').classList.add('hidden');
+function repoNolistaRebuild(){
+  const n=Math.max(0, parseInt($('repo-nolista').value,10)||0);
+  const cont=$('repo-nolista-cont');
+  const prev=[...cont.querySelectorAll('.repo-nl-item')].map(it=>({
+    nombre:it.querySelector('.repo-nl-nombre').value,
+    ano:it.querySelector('.repo-nl-ano').value,
+    tel:it.querySelector('.repo-nl-tel').value }));
+  if(n<=0){ cont.innerHTML=''; cont.classList.add('hidden'); return; }
+  const esc=v=>String(v||'').replace(/"/g,'&quot;');
+  let html='';
+  for(let i=0;i<n;i++){
+    const q=prev[i]||{nombre:'',ano:'',tel:''};
+    html+='<div class="repo-nl-item" style="border:1px solid #2a2f3a;border-radius:10px;padding:10px;margin-top:8px">'
+      +'<div style="font-weight:700;font-size:12px;color:var(--warn);margin-bottom:6px">Jugador '+(i+1)+'</div>'
+      +'<input class="modal-sel repo-nl-nombre" placeholder="Nombre del jugador" value="'+esc(q.nombre)+'">'
+      +'<input class="modal-sel repo-nl-ano" style="margin-top:6px" placeholder="Año (ej: 2012)" value="'+esc(q.ano)+'">'
+      +'<input class="modal-sel repo-nl-tel" style="margin-top:6px" inputmode="tel" placeholder="Número de teléfono" value="'+esc(q.tel)+'">'
+      +'</div>';
+  }
+  cont.innerHTML=html; cont.classList.remove('hidden');
+}
+function repoNolistaData(){
+  const n=Math.max(0, parseInt($('repo-nolista').value,10)||0);
+  if(n<=0) return {n:0, ok:true, list:[]};
+  const items=[...$('repo-nolista-cont').querySelectorAll('.repo-nl-item')];
+  const list=items.map(it=>({
+    nombre:it.querySelector('.repo-nl-nombre').value.trim(),
+    ano:it.querySelector('.repo-nl-ano').value.trim(),
+    tel:it.querySelector('.repo-nl-tel').value.trim() }));
+  const ok = list.length===n && list.every(q=>q.nombre&&q.ano&&q.tel);
+  return {n:n, ok:ok, list:list};
+}
+$('repo-nolista').addEventListener('input',repoNolistaRebuild);
+$('repo-cerrar').onclick=()=>{
+  if(!repoNolistaData().ok){ toast('Completa nombre, año y teléfono de cada jugador no en lista (o pon 0)'); return; }
+  $('repo-modal').classList.add('hidden');
+};
 $('repo-guardar').onclick=async ()=>{
   const parts=($('sedecat').value||'').split('||');
   if(!$('repo-ent').value){ toast('Selecciona el entrenador'); return; }
+  const nl=repoNolistaData();
+  if(!nl.ok){ toast('Completa nombre, año y teléfono de cada jugador no en lista (o pon 0)'); return; }
   const k=repoConteo();
   const body={action:'repoent', sede:parts[0]||'', cat:parts[1]||'', fecha:$('repo-fecha').textContent,
+    noEnLista:nl.n, noEnListaJugadores:JSON.stringify(nl.list),
     horario:$('repo-horario').value, balones:$('repo-balones').value,
     observacion:$('repo-obs').value, entrenador:$('repo-ent').value,
     enCancha:[$('repo-cancha1').value,$('repo-cancha2').value].filter(Boolean).join(', '),
