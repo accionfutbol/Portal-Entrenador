@@ -375,7 +375,7 @@ async function cargarConfig(){
 }
 function esSenior(){ return ($('sedecat').value||'').indexOf('SENIOR||')===0; }
 function setSeniorUI(on){
-  ['btn-repoent','btn-noinscrito','cat-filter-wrap','summary','cat-totales'].forEach(id=>{
+  ['btn-noinscrito','cat-filter-wrap','summary','cat-totales'].forEach(id=>{
     const el=$(id); if(el) el.style.display = on ? 'none' : '';
   });
 }
