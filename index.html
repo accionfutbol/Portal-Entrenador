@@ -28,6 +28,17 @@ body{
   font-family:'Inter',system-ui,-apple-system,sans-serif;
   min-height:100vh;-webkit-font-smoothing:antialiased;
 }
+/* Accesibilidad: Focus visible mejorado */
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{
+  outline:2px solid var(--pink);outline-offset:2px;
+}
+input[type="date"]:focus-visible,input[type="text"]:focus-visible,input[type="email"]:focus-visible{
+  outline:2px solid var(--pink);outline-offset:2px;
+}
+/* Accesibilidad: Reducir movimiento para usuarios sensibles */
+@media (prefers-reduced-motion: reduce) {
+  *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+}
 
 /* ── HERO SECTION ── */
 .hero-wrap{
@@ -234,6 +245,40 @@ main{max-width:980px;margin:0 auto;padding:40px 28px 80px}
 .err-box ol{padding-left:20px;color:var(--muted);font-size:14px;line-height:1.8}
 .err-box ol b{color:var(--ink)}
 .err-detail{color:var(--muted2);font-size:12px;margin-top:12px}
+
+/* ── SKELETON LOADERS ── */
+.skeleton{
+  background:linear-gradient(90deg,var(--panel2) 0%,var(--panel) 50%,var(--panel2) 100%);
+  background-size:200% 100%;
+  animation:skeleton-loading 1.5s infinite;
+  border-radius:8px;
+  height:20px;
+}
+@keyframes skeleton-loading{
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
+}
+.skeleton-text{height:16px;margin-bottom:12px;border-radius:4px}
+.skeleton-title{height:28px;margin-bottom:16px;border-radius:6px}
+.skeleton-box{
+  background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  padding:20px;margin-bottom:16px;
+}
+.skeleton-box .skeleton{margin-bottom:12px}
+.skeleton-box .skeleton:last-child{margin-bottom:0}
+.skeleton-field{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;
+}
+.skeleton-field .skeleton{height:24px}
+.skeleton-avatar{
+  width:72px;height:72px;border-radius:50%;
+  background:linear-gradient(90deg,var(--panel2) 0%,var(--panel) 50%,var(--panel2) 100%);
+  background-size:200% 100%;
+  animation:skeleton-loading 1.5s infinite;
+  margin-bottom:16px;
+}
+.skeleton-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px}
+.skeleton-grid .skeleton{height:100px}
 
 /* footer */
 footer{
@@ -510,39 +555,39 @@ footer strong{color:var(--muted)}
     <img class="home-logo" id="homeLogo" alt="Acción Fútbol">
     <h1 class="home-title">Portal del<br><em>Entrenador</em></h1>
     <div class="home-buttons">
-      <button class="home-btn home-btn-primary" id="btn-ficha">
+      <button class="home-btn home-btn-primary" id="btn-ficha" aria-label="Buscar ficha de jugador">
         <span class="home-btn-icon">📋</span>
         <span>Buscar Jugador</span>
       </button>
-      <button class="home-btn home-btn-primary" id="btn-asistencia">
+      <button class="home-btn home-btn-primary" id="btn-asistencia" aria-label="Registrar asistencia de entrenamientos">
         <span class="home-btn-icon">✓</span>
         <span>Asistencia</span>
       </button>
-      <button class="home-btn home-btn-ghost" id="btn-reporte">
+      <button class="home-btn home-btn-ghost" id="btn-reporte" aria-label="Ver reporte de asistencia">
         <span class="home-btn-icon">📊</span>
         <span>Reporte de Asistencia</span>
       </button>
-      <button class="home-btn home-btn-ghost" id="btn-ficha-partido">
+      <button class="home-btn home-btn-ghost" id="btn-ficha-partido" aria-label="Registrar ficha de partidos">
         <span class="home-btn-icon">📝</span>
         <span>Ficha Partidos</span>
       </button>
-      <button class="home-btn home-btn-ghost" id="btn-detalles-partidos">
+      <button class="home-btn home-btn-ghost" id="btn-detalles-partidos" aria-label="Ver información de minutaje">
         <span class="home-btn-icon">📊</span>
         <span>Información de Minutaje</span>
       </button>
-      <button class="home-btn home-btn-ghost" id="btn-evaluaciones">
+      <button class="home-btn home-btn-ghost" id="btn-evaluaciones" aria-label="Ver evaluaciones de jugadores">
         <span class="home-btn-icon">📝</span>
         <span>Evaluaciones</span>
       </button>
-      <button class="home-btn home-btn-ghost" id="btn-certificados">
+      <button class="home-btn home-btn-ghost" id="btn-certificados" aria-label="Descargar certificados de jugadores">
         <span class="home-btn-icon">📄</span>
         <span>Certificados de Jugadores y Partidos</span>
       </button>
-      <button class="home-btn home-btn-ghost" id="btn-uniformes">
+      <button class="home-btn home-btn-ghost" id="btn-uniformes" aria-label="Registrar entrega de uniformes">
         <span class="home-btn-icon">👕</span>
         <span>Entrega de Uniformes</span>
       </button>
-      <button class="home-btn home-btn-ghost" id="btn-planificaciones">
+      <button class="home-btn home-btn-ghost" id="btn-planificaciones" aria-label="Ver planificaciones de entrenamientos">
         <span class="home-btn-icon">📅</span>
         <span>Planificaciones</span>
       </button>
@@ -583,8 +628,9 @@ footer strong{color:var(--muted)}
         <span class="search-ico">⌕</span>
         <input id="q" type="text"
           placeholder="Ej: Juan Pérez o 24.073.947-K"
+          aria-label="Buscar jugador por nombre o RUT"
           autocomplete="off" spellcheck="false" disabled>
-        <button class="btn-search" id="go" disabled>Buscar</button>
+        <button class="btn-search" id="go" aria-label="Ejecutar búsqueda" disabled>Buscar</button>
       </div>
       <div class="results-list" id="results"></div>
       <p class="search-hint" id="hint">Cargando base de jugadores…</p>
@@ -594,12 +640,12 @@ footer strong{color:var(--muted)}
 
 <!-- ══ MAIN ══ -->
 <main>
-  <div class="loader" id="loader">
-    <div class="spin"></div>
+  <div class="loader" id="loader" role="status" aria-live="polite" aria-label="Cargando datos">
+    <div class="spin" aria-hidden="true"></div>
     <span>Conectando con la base de datos…</span>
   </div>
 
-  <div class="err-box" id="errBox">
+  <div class="err-box" id="errBox" role="alert" aria-live="polite" aria-label="Mensaje de error">
     <h4>⚠ No se pudo cargar la base de datos</h4>
     <ol>
       <li>Verifica tu conexión a internet.</li>
@@ -701,8 +747,8 @@ footer strong{color:var(--muted)}
       </div>
 
       <div class="ficha-actions">
-        <button class="btn btn-primary" id="pdf">⤓ Descargar PDF</button>
-        <button class="btn btn-ghost" id="clear">← Nueva búsqueda</button>
+        <button class="btn btn-primary" id="pdf" aria-label="Descargar ficha de jugador como PDF">⤓ Descargar PDF</button>
+        <button class="btn btn-ghost" id="clear" aria-label="Realizar nueva búsqueda de jugador">← Nueva búsqueda</button>
       </div>
     </div>
   </div>
@@ -746,18 +792,18 @@ footer strong{color:var(--muted)}
       </p>
 
       <div class="fecha-sel">
-        <label>Fecha del entrenamiento</label>
+        <label for="asis-fecha">Fecha del entrenamiento</label>
         <div class="fecha-row">
-          <button type="button" class="chip-fecha" id="fecha-ayer">← Ayer</button>
-          <input type="date" id="asis-fecha">
-          <button type="button" class="chip-fecha active" id="fecha-hoy">Hoy</button>
+          <button type="button" class="chip-fecha" id="fecha-ayer" aria-label="Seleccionar día anterior">← Ayer</button>
+          <input type="date" id="asis-fecha" aria-label="Seleccionar fecha del entrenamiento">
+          <button type="button" class="chip-fecha active" id="fecha-hoy" aria-label="Seleccionar hoy">Hoy</button>
         </div>
       </div>
 
       <div class="plan-sel" style="margin:0;max-width:640px">
         <div>
-          <label>Sede y categoría</label>
-          <select id="asis-sedecat" disabled>
+          <label for="asis-sedecat">Sede y categoría</label>
+          <select id="asis-sedecat" aria-label="Seleccionar sede y categoría" disabled>
             <option value="">Cargando jugadores…</option>
           </select>
         </div>
@@ -1318,8 +1364,8 @@ function rosterItemHTML(p){
         '<div class="roster-meta">RUT '+p.rut+'</div>'+
       '</div>'+
       '<div class="roster-actions">'+
-        '<button class="btn-si" id="si-'+p.key+'">Sí</button>'+
-        '<button class="btn-no" id="no-'+p.key+'">No</button>'+
+        '<button class="btn-si" id="si-'+p.key+'" aria-label="Marcar asistencia de '+p.nombre+'">Sí</button>'+
+        '<button class="btn-no" id="no-'+p.key+'" aria-label="Marcar inasistencia de '+p.nombre+'">No</button>'+
       '</div>'+
     '</div>'
   );
