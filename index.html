@@ -860,6 +860,9 @@ footer strong{color:var(--muted)}
           <optgroup label="La Florida">
             <option value="LA FLORIDA|SUB16">La Florida · SUB16 y SUB18</option>
           </optgroup>
+          <optgroup label="Maipú">
+            <option value="MAIPÚ|MAIPÚ">Maipú</option>
+          </optgroup>
         </select>
       </div>
     </div>
@@ -891,6 +894,7 @@ const COL_PLAN = {
   'LAS CONDES|SUB18 AR':    [16, 17],
   'LA FLORIDA|SUB16':       [18, 19],
   'LA FLORIDA|SUB18':       [18, 19],
+  'MAIPÚ|MAIPÚ':            [20, 21],
 };
 // Días de entrenamiento (0=Dom,1=Lun,2=Mar,3=Mié,4=Jue,5=Vie,6=Sáb)
 const HORARIOS = {
@@ -904,6 +908,7 @@ const HORARIOS = {
   'PEÑALOLÉN|SUB18':       [2,4,5],
   'LA FLORIDA|SUB16':      [2,4,5],
   'LA FLORIDA|SUB18':      [2,4,5],
+  'MAIPÚ|MAIPÚ':           [1,3,5],
 };
 const DIAS_ES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -1549,7 +1554,6 @@ $('pdf').onclick=async ()=>{
 
 /* ══ PLANIFICACIONES ══ */
 let PLAN_DATA = null;
-
 function showPlan(){
   $('view-home').style.display='none';
   $('view-ficha').style.display='none';
@@ -1569,6 +1573,7 @@ const CATS_POR_SEDE = {
   'LAS CONDES': ['SUB14','SUB16 AR','SUB16 COMP','SUB18 AR','SUB18 COMP'],
   'PEÑALOLÉN':  ['SUB14','SUB16','SUB18'],
   'LA FLORIDA': ['SUB16','SUB18'],
+  'MAIPÚ':      ['MAIPÚ'],
 };
 
 $('plan-cat').addEventListener('change', function(){
