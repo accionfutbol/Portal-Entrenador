@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acción Fútbol · Data Fútbol</title>
+<meta name="theme-color" content="#ff2e93">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0c0c0e; --panel:#161619; --panel2:#1f1f24; --line:#2a2a30;
+  --pink:#ff2e93; --pink-deep:#c70f6e; --pink-soft:#ff6bb5; --pink-dim:rgba(255,46,147,.12);
+  --ink:#f5f5f7; --muted:#9a9aa3; --muted2:#5c5c66; --ok:#27c281; --warn:#ffb020;
+  --red:#ff5050;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  min-height:100vh;-webkit-font-smoothing:antialiased;
+}
+button:focus-visible,input:focus-visible,select:focus-visible{
+  outline:2px solid var(--pink);outline-offset:2px;
+}
+
+/* ── LOGIN ── */
+.login-wrap{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,#0e0e12 0%,#120810 60%,#0c0c0e 100%);
+  position:relative;overflow:hidden;
+}
+.login-wrap::before{
+  content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 900px 500px at 110% -10%,rgba(255,46,147,.18),transparent 55%),
+    radial-gradient(ellipse 600px 400px at -10% 120%,rgba(199,15,110,.12),transparent 55%);
+  pointer-events:none;
+}
+.login-card{
+  position:relative;z-index:2;width:100%;max-width:400px;margin:20px;
+  background:var(--panel);border:1px solid var(--line);border-radius:24px;
+  padding:48px 36px;text-align:center;
+  box-shadow:0 40px 80px rgba(0,0,0,.6);
+}
+.login-logo{width:80px;height:80px;margin:0 auto 20px;display:block;
+  filter:drop-shadow(0 6px 20px rgba(255,46,147,.3))}
+.login-title{font-family:'Oswald';font-weight:700;font-size:28px;text-transform:uppercase;
+  letter-spacing:.06em;margin-bottom:6px}
+.login-title em{color:var(--pink);font-style:normal}
+.login-sub{color:var(--muted);font-size:13px;margin-bottom:32px}
+.login-field{
+  width:100%;background:var(--panel2);border:1.5px solid var(--line);
+  border-radius:12px;padding:14px 16px;color:var(--ink);font-size:14px;
+  font-family:'Inter',sans-serif;margin-bottom:14px;
+  transition:border-color .2s;
+}
+.login-field::placeholder{color:var(--muted2)}
+.login-field:focus{border-color:var(--pink);outline:none}
+.login-btn{
+  width:100%;padding:15px;border:none;border-radius:12px;
+  background:linear-gradient(135deg,var(--pink),var(--pink-deep));
+  color:#fff;font-family:'Oswald';font-weight:600;font-size:15px;
+  letter-spacing:.1em;text-transform:uppercase;cursor:pointer;
+  transition:filter .15s,transform .1s;margin-top:6px;
+}
+.login-btn:hover{filter:brightness(1.1)}
+.login-btn:active{transform:scale(.97)}
+.login-error{
+  color:var(--red);font-size:13px;margin-top:14px;display:none;
+}
+.login-back{
+  display:inline-block;margin-top:20px;color:var(--muted);font-size:12px;
+  text-decoration:none;transition:color .15s;
+}
+.login-back:hover{color:var(--pink-soft)}
+
+/* ── DASHBOARD ── */
+.dash{display:none;min-height:100vh}
+.dash-header{
+  background:linear-gradient(160deg,#0e0e12 0%,#120810 60%,#0c0c0e 100%);
+  position:relative;overflow:hidden;padding:0 0 40px;
+}
+.dash-header::before{
+  content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 900px 500px at 110% -10%,rgba(255,46,147,.18),transparent 55%),
+    radial-gradient(ellipse 600px 400px at -10% 120%,rgba(199,15,110,.12),transparent 55%);
+  pointer-events:none;
+}
+.dash-nav{
+  display:flex;align-items:center;gap:12px;padding:22px 28px 0;
+  position:relative;z-index:2;max-width:1200px;margin:0 auto;
+}
+.logo-wrap{display:flex;align-items:center;gap:12px}
+.logo-img{width:48px;height:48px;object-fit:contain;
+  filter:drop-shadow(0 4px 14px rgba(255,46,147,.3))}
+.brand b{font-family:'Oswald';font-weight:600;letter-spacing:.12em;font-size:15px;
+  text-transform:uppercase;display:block;line-height:1.1}
+.brand span{color:var(--muted);font-size:11px}
+.dash-logout{
+  margin-left:auto;background:var(--panel);border:1px solid var(--line);
+  border-radius:10px;padding:8px 16px;color:var(--muted);font-size:12px;
+  font-family:'Inter';cursor:pointer;transition:border-color .15s,color .15s;
+}
+.dash-logout:hover{border-color:var(--pink);color:var(--ink)}
+.dash-hero{
+  max-width:1200px;margin:0 auto;padding:40px 28px 0;position:relative;z-index:2;
+}
+.dash-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'Oswald';letter-spacing:.28em;text-transform:uppercase;
+  color:var(--pink);font-size:11px;font-weight:600;margin-bottom:14px;
+}
+.dash-eyebrow::before{content:"";width:18px;height:2px;background:var(--pink)}
+.dash-h1{
+  font-family:'Oswald';font-weight:700;font-size:clamp(32px,5vw,52px);
+  line-height:.92;text-transform:uppercase;margin-bottom:12px;letter-spacing:-.01em;
+}
+.dash-h1 em{color:var(--pink);font-style:normal}
+.dash-sub{color:var(--muted);font-size:14px;margin-bottom:8px}
+
+/* ── TABS ── */
+.tabs{
+  max-width:1200px;margin:0 auto;padding:0 28px;position:relative;z-index:2;
+  display:flex;gap:6px;flex-wrap:wrap;margin-top:24px;
+}
+.tab{
+  background:var(--panel);border:1.5px solid var(--line);border-radius:10px;
+  padding:10px 18px;font-family:'Oswald';font-weight:500;font-size:13px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  cursor:pointer;transition:all .15s;
+}
+.tab:hover{border-color:var(--pink-soft);color:var(--ink)}
+.tab.active{background:var(--pink-dim);border-color:var(--pink);color:var(--pink-soft)}
+
+/* ── MAIN ── */
+.dash-main{max-width:1200px;margin:0 auto;padding:28px}
+
+/* ── KPI CARDS ── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:28px}
+.kpi{
+  background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  padding:22px 20px;transition:border-color .15s;
+}
+.kpi:hover{border-color:rgba(255,46,147,.3)}
+.kpi-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;
+  font-family:'Oswald';font-weight:500;margin-bottom:8px}
+.kpi-val{font-family:'Oswald';font-weight:700;font-size:32px;color:var(--ink);line-height:1}
+.kpi-sub{font-size:12px;color:var(--muted2);margin-top:6px}
+.kpi-val.pink{color:var(--pink)}
+.kpi-val.ok{color:var(--ok)}
+.kpi-val.warn{color:var(--warn)}
+
+/* ── SECTION ── */
+.sec{margin-bottom:28px}
+.sec-title{
+  font-family:'Oswald';font-weight:600;font-size:16px;letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:16px;color:var(--pink-soft);
+  display:flex;align-items:center;gap:10px;
+}
+.sec-title::before{content:"";width:4px;height:18px;background:var(--pink);border-radius:2px}
+
+/* ── CHART CONTAINERS ── */
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px}
+@media(max-width:768px){.chart-row{grid-template-columns:1fr}}
+.chart-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  padding:22px;
+}
+.chart-card h3{
+  font-family:'Oswald';font-weight:600;font-size:13px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:16px;
+}
+.chart-wrap{position:relative;width:100%;max-height:300px}
+
+/* ── TABLE ── */
+.tbl-wrap{
+  background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  overflow:hidden;
+}
+.tbl-toolbar{
+  display:flex;align-items:center;gap:12px;padding:16px 20px;
+  border-bottom:1px solid var(--line);flex-wrap:wrap;
+}
+.tbl-search{
+  flex:1;min-width:200px;background:var(--panel2);border:1.5px solid var(--line);
+  border-radius:10px;padding:10px 14px;color:var(--ink);font-size:13px;
+  font-family:'Inter';transition:border-color .2s;
+}
+.tbl-search:focus{border-color:var(--pink);outline:none}
+.tbl-search::placeholder{color:var(--muted2)}
+.tbl-filter{
+  background:var(--panel2);border:1.5px solid var(--line);border-radius:10px;
+  padding:10px 14px;color:var(--ink);font-size:13px;font-family:'Inter';
+  appearance:none;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239a9aa3' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;padding-right:32px;
+}
+.tbl-count{font-size:12px;color:var(--muted);font-family:'Oswald';letter-spacing:.06em}
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{
+  background:var(--panel2);padding:12px 14px;text-align:left;
+  font-family:'Oswald';font-weight:500;font-size:11.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);
+  white-space:nowrap;position:sticky;top:0;cursor:pointer;
+  user-select:none;
+}
+thead th:hover{color:var(--pink-soft)}
+thead th .sort-arrow{margin-left:4px;font-size:10px;opacity:.4}
+thead th.sorted .sort-arrow{opacity:1;color:var(--pink)}
+tbody td{
+  padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap;
+}
+tbody tr:hover{background:var(--panel2)}
+tbody tr:last-child td{border-bottom:0}
+
+/* Estado badges */
+.badge{
+  display:inline-block;padding:3px 10px;border-radius:999px;
+  font-family:'Oswald';font-size:11px;font-weight:500;letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.badge-activo{background:rgba(39,194,129,.12);color:#27c281;border:1px solid rgba(39,194,129,.25)}
+.badge-new{background:rgba(100,149,237,.12);color:#6495ed;border:1px solid rgba(100,149,237,.25)}
+.badge-full{background:rgba(255,176,32,.12);color:#ffb020;border:1px solid rgba(255,176,32,.25)}
+.badge-desactivado{background:rgba(156,156,163,.1);color:#9a9aa3;border:1px solid rgba(156,156,163,.2)}
+.badge-lesionado{background:rgba(255,80,80,.12);color:#ff5050;border:1px solid rgba(255,80,80,.25)}
+.badge-seguro{background:rgba(39,194,129,.12);color:#27c281;border:1px solid rgba(39,194,129,.25)}
+.badge-inseguro{background:rgba(255,176,32,.12);color:#ffb020;border:1px solid rgba(255,176,32,.25)}
+.badge-out{background:rgba(156,156,163,.1);color:var(--muted2);border:1px solid rgba(156,156,163,.15)}
+.badge-aldia{background:rgba(39,194,129,.12);color:#27c281;border:1px solid rgba(39,194,129,.25)}
+.badge-moroso{background:rgba(255,80,80,.12);color:#ff5050;border:1px solid rgba(255,80,80,.25)}
+
+/* paginación */
+.tbl-pag{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 20px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);
+}
+.tbl-pag button{
+  background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+  padding:7px 14px;color:var(--muted);font-size:12px;cursor:pointer;
+  transition:border-color .15s;
+}
+.tbl-pag button:hover:not(:disabled){border-color:var(--pink);color:var(--ink)}
+.tbl-pag button:disabled{opacity:.3;cursor:default}
+
+/* ── LOADING ── */
+.loading-overlay{
+  position:fixed;inset:0;z-index:999;
+  background:var(--bg);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+}
+.spinner{
+  width:48px;height:48px;border:3px solid var(--line);border-top-color:var(--pink);
+  border-radius:50%;animation:spin .8s linear infinite;margin-bottom:20px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{color:var(--muted);font-size:14px;font-family:'Inter'}
+.loading-bar{
+  width:260px;height:4px;background:var(--panel2);border-radius:4px;
+  margin-top:16px;overflow:hidden;
+}
+.loading-bar-fill{
+  height:100%;width:0%;background:linear-gradient(90deg,var(--pink),var(--pink-soft));
+  border-radius:4px;transition:width .3s;
+}
+
+/* ── PANEL VIEW (tabs content) ── */
+.panel{display:none}
+.panel.active{display:block}
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px){
+  .kpi-row{grid-template-columns:1fr 1fr}
+  .kpi-val{font-size:26px}
+  .login-card{padding:36px 24px}
+  .tbl-toolbar{flex-direction:column}
+  .tabs{gap:4px}
+  .tab{padding:8px 12px;font-size:12px}
+}
+
+/* ── STAT BARS ── */
+.stat-bar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.stat-bar-label{width:120px;font-size:12px;color:var(--muted);text-align:right;flex-shrink:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stat-bar-track{flex:1;height:24px;background:var(--panel2);border-radius:6px;overflow:hidden;position:relative}
+.stat-bar-fill{height:100%;border-radius:6px;transition:width .6s ease}
+.stat-bar-val{position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  font-family:'Oswald';font-size:12px;color:var(--ink);font-weight:500}
+
+/* ── TOP LIST ── */
+.top-list{list-style:none}
+.top-item{
+  display:flex;align-items:center;gap:14px;padding:12px 0;
+  border-bottom:1px solid var(--line);
+}
+.top-item:last-child{border-bottom:0}
+.top-rank{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  background:var(--pink-dim);border:1px solid rgba(255,46,147,.25);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Oswald';font-weight:700;font-size:13px;color:var(--pink-soft);
+}
+.top-name{flex:1;font-size:14px;font-weight:500}
+.top-val{font-family:'Oswald';font-weight:700;font-size:18px;color:var(--pink)}
+.top-sub{font-size:11px;color:var(--muted);margin-left:4px}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="login-view" class="login-wrap">
+  <div class="login-card">
+    <img class="login-logo" id="loginLogo" alt="Acción Fútbol"
+         src="https://lh3.googleusercontent.com/d/1YJC7S3vORvcvlMI8cMwWIRBgPI1LGdjk">
+    <div class="login-title">Data <em>Fútbol</em></div>
+    <div class="login-sub">Panel de gestión · Acceso restringido</div>
+    <input class="login-field" id="login-email" type="email" placeholder="Correo electrónico" autocomplete="email">
+    <input class="login-field" id="login-pass" type="password" placeholder="Contraseña" autocomplete="current-password">
+    <button class="login-btn" id="login-btn">Ingresar</button>
+    <div class="login-error" id="login-error">Credenciales incorrectas</div>
+    <a class="login-back" href="/portal_entrenador.html">← Volver al portal</a>
+  </div>
+</div>
+
+<!-- ══ LOADING ══ -->
+<div class="loading-overlay" id="loading" style="display:none">
+  <div class="spinner"></div>
+  <div class="loading-text">Cargando data de la academia…</div>
+  <div class="loading-bar"><div class="loading-bar-fill" id="loadBar"></div></div>
+</div>
+
+<!-- ══ DASHBOARD ══ -->
+<div class="dash" id="dash">
+
+  <div class="dash-header">
+    <div class="dash-nav">
+      <div class="logo-wrap">
+        <img class="logo-img" id="dashLogo" alt="Acción Fútbol"
+             src="https://lh3.googleusercontent.com/d/1YJC7S3vORvcvlMI8cMwWIRBgPI1LGdjk">
+        <div class="brand">
+          <b>Acción Fútbol</b>
+          <span>Data Fútbol</span>
+        </div>
+      </div>
+      <button class="dash-logout" id="logoutBtn">Cerrar sesión</button>
+    </div>
+    <div class="dash-hero">
+      <div class="dash-eyebrow">Panel de gestión</div>
+      <h1 class="dash-h1">Data <em>Fútbol</em></h1>
+      <div class="dash-sub">Temporada 2026 · Información actualizada desde la base de datos</div>
+    </div>
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-tab="resumen">Resumen</div>
+      <div class="tab" data-tab="jugadores">Jugadores</div>
+      <div class="tab" data-tab="partidos">Partidos</div>
+      <div class="tab" data-tab="evaluaciones">Evaluaciones</div>
+      <div class="tab" data-tab="cobranzas">Cobranzas</div>
+    </div>
+  </div>
+
+  <div class="dash-main">
+
+    <!-- ═══ RESUMEN ═══ -->
+    <div class="panel active" id="p-resumen">
+      <div class="kpi-row" id="kpiRow"></div>
+      <div class="chart-row">
+        <div class="chart-card">
+          <h3>Distribución por estado</h3>
+          <div class="chart-wrap"><canvas id="chartEstado"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Distribución por tipo</h3>
+          <div class="chart-wrap"><canvas id="chartTipo"></canvas></div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-title">Ocupación por sede / categoría</div>
+        <div id="barsSede"></div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-card">
+          <h3>Jugadores entrenando (mensual)</h3>
+          <div class="chart-wrap"><canvas id="chartHistorial"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Distribución por edad</h3>
+          <div class="chart-wrap"><canvas id="chartEdad"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ JUGADORES ═══ -->
+    <div class="panel" id="p-jugadores">
+      <div class="tbl-wrap">
+        <div class="tbl-toolbar">
+          <input class="tbl-search" id="jugSearch" placeholder="Buscar jugador por nombre o RUT…">
+          <select class="tbl-filter" id="jugEstado">
+            <option value="">Todos los estados</option>
+            <option value="ACTIVO">Activo</option>
+            <option value="NEW">New</option>
+            <option value="FULL">Full</option>
+            <option value="DESACTIVADO">Desactivado</option>
+            <option value="LESIONADO">Lesionado</option>
+          </select>
+          <select class="tbl-filter" id="jugSede">
+            <option value="">Todas las sedes</option>
+          </select>
+          <select class="tbl-filter" id="jugCat">
+            <option value="">Todas las categorías</option>
+          </select>
+          <span class="tbl-count" id="jugCount"></span>
+        </div>
+        <div class="tbl-scroll" style="max-height:65vh;overflow-y:auto">
+          <table>
+            <thead id="jugHead"></thead>
+            <tbody id="jugBody"></tbody>
+          </table>
+        </div>
+        <div class="tbl-pag" id="jugPag"></div>
+      </div>
+    </div>
+
+    <!-- ═══ PARTIDOS ═══ -->
+    <div class="panel" id="p-partidos">
+      <div class="chart-row">
+        <div class="chart-card">
+          <h3>Top 10 — Minutaje</h3>
+          <ul class="top-list" id="topMinutos"></ul>
+        </div>
+        <div class="chart-card">
+          <h3>Top 10 — Goleadores</h3>
+          <ul class="top-list" id="topGoles"></ul>
+        </div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-card">
+          <h3>Top 10 — Nota promedio</h3>
+          <ul class="top-list" id="topNota"></ul>
+        </div>
+        <div class="chart-card">
+          <h3>Top 10 — Convocatorias</h3>
+          <ul class="top-list" id="topConv"></ul>
+        </div>
+      </div>
+      <div class="sec" style="margin-top:12px">
+        <div class="sec-title">Todos los jugadores</div>
+      </div>
+      <div class="tbl-wrap">
+        <div class="tbl-toolbar">
+          <input class="tbl-search" id="parSearch" placeholder="Buscar jugador…">
+          <span class="tbl-count" id="parCount"></span>
+        </div>
+        <div class="tbl-scroll" style="max-height:55vh;overflow-y:auto">
+          <table>
+            <thead id="parHead"></thead>
+            <tbody id="parBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ EVALUACIONES ═══ -->
+    <div class="panel" id="p-evaluaciones">
+      <div class="chart-row">
+        <div class="chart-card">
+          <h3>Promedio por categoría</h3>
+          <div class="chart-wrap"><canvas id="chartEvalCat"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Distribución de notas</h3>
+          <div class="chart-wrap"><canvas id="chartEvalDist"></canvas></div>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <div class="tbl-toolbar">
+          <input class="tbl-search" id="evalSearch" placeholder="Buscar jugador…">
+          <select class="tbl-filter" id="evalCat">
+            <option value="">Todas las categorías</option>
+          </select>
+          <span class="tbl-count" id="evalCount"></span>
+        </div>
+        <div class="tbl-scroll" style="max-height:55vh;overflow-y:auto">
+          <table>
+            <thead id="evalHead"></thead>
+            <tbody id="evalBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ COBRANZAS ═══ -->
+    <div class="panel" id="p-cobranzas">
+      <div class="kpi-row" id="cobKpis"></div>
+      <div class="tbl-wrap">
+        <div class="tbl-toolbar">
+          <input class="tbl-search" id="cobSearch" placeholder="Buscar jugador…">
+          <select class="tbl-filter" id="cobPago">
+            <option value="">Todos</option>
+            <option value="AL DIA">Al día</option>
+            <option value="MOROSO">Moroso</option>
+          </select>
+          <span class="tbl-count" id="cobCount"></span>
+        </div>
+        <div class="tbl-scroll" style="max-height:55vh;overflow-y:auto">
+          <table>
+            <thead id="cobHead"></thead>
+            <tbody id="cobBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ══ AUTH ══ */
+const VALID_EMAIL = 'informacion@accionfutbol.cl';
+const VALID_PASS  = 'directoresaccionfutbol';
+
+$('login-btn').onclick = doLogin;
+$('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+$('logoutBtn').onclick = () => { sessionStorage.removeItem('df_auth'); location.reload(); };
+
+if(sessionStorage.getItem('df_auth')==='1') startDash();
+
+function doLogin(){
+  const email = $('login-email').value.trim().toLowerCase();
+  const pass  = $('login-pass').value;
+  if(email === VALID_EMAIL && pass === VALID_PASS){
+    sessionStorage.setItem('df_auth','1');
+    startDash();
+  } else {
+    $('login-error').style.display = 'block';
+    $('login-pass').value = '';
+  }
+}
+
+/* ══ TABS ══ */
+document.querySelectorAll('.tab').forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    $('p-'+t.dataset.tab).classList.add('active');
+  };
+});
+
+/* ══ DATA ══ */
+// URL del deployment de DataFutbol.gs — REEMPLAZAR tras desplegar
+const API = '';
+let DATA = null;
+
+async function startDash(){
+  $('login-view').style.display = 'none';
+  $('loading').style.display = 'flex';
+  $('dash').style.display = 'block';
+
+  const bar = $('loadBar');
+  bar.style.width = '20%';
+
+  try {
+    if(API){
+      const res = await fetch(API + '?action=all');
+      DATA = await res.json();
+    } else {
+      DATA = buildMockData();
+    }
+    bar.style.width = '80%';
+    renderAll();
+    bar.style.width = '100%';
+    setTimeout(() => { $('loading').style.display = 'none'; }, 400);
+  } catch(err){
+    bar.style.width = '100%';
+    $('loading').querySelector('.loading-text').textContent = 'Error al cargar: ' + err.message;
+  }
+}
+
+/* ══ MOCK DATA (para demo sin backend desplegado) ══ */
+function buildMockData(){
+  return {
+    dashboard: {
+      kpis: {
+        totalJugadores:666, jugadoresEntrenando:484,
+        activoSeguro:286, activoInseguro:142, activoNew:132,
+        activoBecado:15, desactivados:5, lesionados:0, receso:2
+      },
+      porTipo: [
+        {tipo:"PRO'S",cantidad:447,pct:'67.1%'},
+        {tipo:'ADULTOS',cantidad:66,pct:'9.9%'},
+        {tipo:'FEMENINO',cantidad:11,pct:'1.7%'},
+        {tipo:'KIDS',cantidad:68,pct:'10.2%'}
+      ],
+      porSede: [
+        {sede:'LC S18',ar:46,comp:49,total:95,pct:'14.3%'},
+        {sede:'LC S16',ar:29,comp:43,total:72,pct:'10.8%'},
+        {sede:'LC S14',ar:14,comp:41,total:55,pct:'8.3%'},
+        {sede:'PÑ S18',ar:15,comp:42,total:57,pct:'8.6%'},
+        {sede:'PÑ S16',ar:18,comp:46,total:64,pct:'9.6%'},
+        {sede:'PÑ S14',ar:26,comp:42,total:68,pct:'10.2%'},
+        {sede:'LF S18',ar:0,comp:12,total:12,pct:'1.8%'},
+        {sede:'LF S16',ar:0,comp:17,total:17,pct:'2.6%'},
+        {sede:'LF S14',ar:0,comp:7,total:7,pct:'1.1%'},
+        {sede:'AM',ar:0,comp:0,total:33,pct:'5.0%'},
+        {sede:'PM',ar:0,comp:0,total:33,pct:'5.0%'},
+        {sede:'FEM',ar:0,comp:0,total:11,pct:'1.7%'},
+        {sede:'KIDS',ar:0,comp:0,total:68,pct:'10.2%'}
+      ]
+    },
+    jugadores: generateMockJugadores(),
+    partidos: generateMockPartidos(),
+    evaluaciones: generateMockEvaluaciones(),
+    cobranzas: generateMockCobranzas(),
+    historial: {
+      meses:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+      'JUGADORES QUE HAN IDO A ENTRENAR':[374,241,471,501,499,null,null,null,null,null,null,null],
+      'Nº TT SEGUROS':[334,180,415,445,null,null,null,null,null,null,null,null]
+    }
+  };
+}
+
+function generateMockJugadores(){
+  const nombres = ['Aarón Aránguiz','Sebastián Arias','Abel Gallardo','Abraham Alvarado',
+    'Simón Fuenzalida','Nicolás Muñoz','Benjamín Vargas','Diego Claveria',
+    'Felipe Aliaga','Gaspar Labraña','Raúl Acosta','Angel Antilao',
+    'Matías Garrido','Amaro Fuenza','Abraham Fuentes','Abraham Ñancul',
+    'David Muñoz','Benjamin Amigo','Aaron Diaz','Aaron Menares'];
+  const sedes = ['LAS CONDES','PEÑALOLÉN','LA FLORIDA','N/A'];
+  const cats = ['S18','S16','S14','AM','PM','KIDS'];
+  const estados = ['ACTIVO','ACTIVO','ACTIVO','NEW','FULL','DESACTIVADO','LESIONADO'];
+  const niveles = ['COMP.','A.R.','N/A'];
+  const meses = ['SEGURO','INSEGURO','OUT'];
+  const pagos = ['AL DIA','AL DIA','AL DIA','MOROSO'];
+  return nombres.map((n,i) => ({
+    rut: (20000000+i*1000000)+'-'+Math.floor(Math.random()*10),
+    nombre:n, estadoGen:estados[i%estados.length], estadoMes:meses[i%meses.length],
+    pago:pagos[i%pagos.length], morosidad:pagos[i%pagos.length]==='MOROSO'?Math.ceil(Math.random()*3):0,
+    fechaNac:'', anio:String(1995+Math.floor(Math.random()*20)),
+    edad:15+Math.floor(Math.random()*18), sede:sedes[i%sedes.length],
+    categoria:cats[i%cats.length], cat:cats[i%cats.length], nivel:niveles[i%niveles.length],
+    subNivel:'', torneos:'', pagoTorneo:'', minutaje:Math.floor(Math.random()*3000),
+    mesIngreso:'', mesSalida:'', duracion:'', posicion:'', pie:''
+  }));
+}
+function generateMockPartidos(){
+  const nombres = ['Angel Antilao','Raúl Acosta','Felipe Aliaga','Gaspar Labraña',
+    'Sebastián Arias','Nicolás Muñoz','Benjamín Vargas','Abraham Fuentes',
+    'Diego Claveria','Matías Garrido','Aaron Diaz','Benjamin Amigo',
+    'David Muñoz','Aarón Aránguiz','Abel Gallardo'];
+  return nombres.map(n => ({
+    jugador:n,
+    convocatorias:10+Math.floor(Math.random()*40),
+    titularidades:5+Math.floor(Math.random()*35),
+    ingresos:Math.floor(Math.random()*10),
+    suplencias:Math.floor(Math.random()*5),
+    minutos:200+Math.floor(Math.random()*2500),
+    goles:Math.floor(Math.random()*12),
+    golesRecibidos:Math.floor(Math.random()*80),
+    tarjetasAmarillas:Math.floor(Math.random()*3),
+    tarjetasRojas:Math.floor(Math.random()*2),
+    nota:+(4+Math.random()*3).toFixed(1),
+    ultimoPartido:''
+  }));
+}
+function generateMockEvaluaciones(){
+  const nombres = ['Aaron Diaz','Aaron Menares','Abraham Fuentes','Benjamin Amigo',
+    'Felipe Aliaga','Gaspar Labraña','Raúl Acosta','Angel Antilao',
+    'Diego Claveria','Matías Garrido','Nicolás Muñoz','Sebastián Arias'];
+  const cats = ['S18','S16','S14','S18','S16','S14','S18','S16','S14','S18','S16','S14'];
+  return nombres.map((n,i) => ({
+    rut:'', jugador:n, estado:'ACTIVO', estadoMes:'SEGURO',
+    categoria:cats[i], anio:'2008', nivel:'COMP.', sede:'PEÑALOLÉN',
+    subNivel:'', posicion:'EXTREMO', posicion2:'', pie:'DIESTRO',
+    torneo1S:'LEAGUE SOCCER', torneo2S:'',
+    notaTecTac:+(4+Math.random()*3).toFixed(1),
+    notaFisica:+(4+Math.random()*3).toFixed(1),
+    notaActitudinal:+(4+Math.random()*3).toFixed(1),
+    promedio:+(4+Math.random()*3).toFixed(1),
+    comentario:'', estadoEval:'OK'
+  }));
+}
+function generateMockCobranzas(){
+  const nombres = ['Benjamín Vargas','Diego Claveria','Amaro Fuenza','Matías Garrido',
+    'Felipe Aliaga','Gaspar Labraña','Raúl Acosta','Angel Antilao',
+    'Nicolás Muñoz','Sebastián Arias'];
+  const pagos = ['AL DIA','AL DIA','AL DIA','AL DIA','AL DIA','AL DIA','MOROSO','AL DIA','AL DIA','AL DIA'];
+  return nombres.map((n,i) => ({
+    rut:'', jugador:n, email:'', apoderado:'',telefono:'',
+    sede:'PEÑALOLÉN', estadoGen:'ACTIVO', estadoMes:'SEGURO', categoria:'S18',
+    morosidadMeses:pagos[i]==='MOROSO'?2:0, morosidadTotal:pagos[i]==='MOROSO'?2:0,
+    montoAtrasado:pagos[i]==='MOROSO'?'$70.000':'$0',
+    montoTotal:pagos[i]==='MOROSO'?'$70.000':'$0',
+    pagoMensualidad:pagos[i], cuotaTorneo:'AL DIA'
+  }));
+}
+
+/* ══ RENDER ALL ══ */
+function renderAll(){
+  renderKPIs();
+  renderCharts();
+  renderSedeBars();
+  renderJugadores();
+  renderPartidos();
+  renderEvaluaciones();
+  renderCobranzas();
+}
+
+/* ── KPIs ── */
+function renderKPIs(){
+  const k = DATA.dashboard.kpis;
+  const items = [
+    {label:'Total jugadores',val:k.totalJugadores,cls:'pink'},
+    {label:'Entrenando',val:k.jugadoresEntrenando,cls:'ok'},
+    {label:'Activos seguro',val:k.activoSeguro,cls:'ok',sub:pct(k.activoSeguro,k.totalJugadores)},
+    {label:'Activos inseguro',val:k.activoInseguro,cls:'warn',sub:pct(k.activoInseguro,k.totalJugadores)},
+    {label:'Activos new',val:k.activoNew,cls:'',sub:pct(k.activoNew,k.totalJugadores)},
+    {label:'Becados',val:k.activoBecado,cls:''},
+    {label:'Desactivados',val:k.desactivados,cls:''},
+    {label:'Lesionados',val:k.lesionados,cls:''}
+  ];
+  $('kpiRow').innerHTML = items.map(i =>
+    '<div class="kpi"><div class="kpi-label">'+i.label+'</div>'+
+    '<div class="kpi-val '+(i.cls||'')+'">'+fmtN(i.val)+'</div>'+
+    (i.sub?'<div class="kpi-sub">'+i.sub+'</div>':'')+
+    '</div>'
+  ).join('');
+}
+
+/* ── CHARTS ── */
+const COLORS = ['#ff2e93','#6495ed','#27c281','#ffb020','#ff5050','#9b59b6','#1abc9c','#e67e22'];
+const CHART_DEFAULTS = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{legend:{labels:{color:'#9a9aa3',font:{family:'Inter',size:11},boxWidth:12,padding:10}}},
+};
+
+function renderCharts(){
+  const k = DATA.dashboard.kpis;
+
+  // Estado doughnut
+  new Chart($('chartEstado'),{
+    type:'doughnut',
+    data:{
+      labels:['Seguro','Inseguro','New','Becado','Desactivado','Lesionado'],
+      datasets:[{data:[k.activoSeguro,k.activoInseguro,k.activoNew,k.activoBecado,k.desactivados,k.lesionados],
+        backgroundColor:COLORS,borderColor:'#161619',borderWidth:2}]
+    },
+    options:{...CHART_DEFAULTS,cutout:'62%',plugins:{...CHART_DEFAULTS.plugins,
+      tooltip:{bodyFont:{family:'Inter'}}}}
+  });
+
+  // Tipo bar
+  const tipos = DATA.dashboard.porTipo;
+  new Chart($('chartTipo'),{
+    type:'bar',
+    data:{
+      labels:tipos.map(t=>t.tipo),
+      datasets:[{label:'Jugadores',data:tipos.map(t=>t.cantidad),
+        backgroundColor:COLORS.slice(0,tipos.length),borderRadius:6,borderSkipped:false}]
+    },
+    options:{...CHART_DEFAULTS,indexAxis:'y',
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#9a9aa3',font:{family:'Inter',size:11}}},
+        y:{grid:{display:false},ticks:{color:'#9a9aa3',font:{family:'Oswald',size:12}}}
+      },
+      plugins:{...CHART_DEFAULTS.plugins,legend:{display:false}}}
+  });
+
+  // Historial line
+  const hist = DATA.historial;
+  const meses = hist.meses || [];
+  const entrVals = hist['JUGADORES QUE HAN IDO A ENTRENAR'] || [];
+  const segVals = hist['Nº TT SEGUROS'] || [];
+  const labels = [], d1 = [], d2 = [];
+  meses.forEach((m,i) => {
+    if(entrVals[i] != null){
+      labels.push(m); d1.push(entrVals[i]);
+      d2.push(segVals[i] != null ? segVals[i] : null);
+    }
+  });
+  new Chart($('chartHistorial'),{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'Entrenando',data:d1,borderColor:'#ff2e93',backgroundColor:'rgba(255,46,147,.1)',
+         fill:true,tension:.3,pointRadius:4,pointBackgroundColor:'#ff2e93'},
+        {label:'Seguros',data:d2,borderColor:'#27c281',backgroundColor:'rgba(39,194,129,.08)',
+         fill:true,tension:.3,pointRadius:4,pointBackgroundColor:'#27c281'}
+      ]
+    },
+    options:{...CHART_DEFAULTS,
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#9a9aa3',font:{family:'Inter',size:11}}},
+        y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#9a9aa3',font:{family:'Inter',size:11}},min:0}
+      }}
+  });
+
+  // Edad distribution
+  const edades = {};
+  (DATA.jugadores||[]).forEach(j => {
+    if(j.edad > 0){
+      const bucket = j.edad < 10 ? 'Sub 10' : j.edad < 13 ? '10-12' : j.edad < 16 ? '13-15' :
+                     j.edad < 19 ? '16-18' : j.edad < 25 ? '19-24' : '25+';
+      edades[bucket] = (edades[bucket]||0)+1;
+    }
+  });
+  const edadOrder = ['Sub 10','10-12','13-15','16-18','19-24','25+'];
+  const edadLabels = edadOrder.filter(b => edades[b]);
+  new Chart($('chartEdad'),{
+    type:'bar',
+    data:{
+      labels:edadLabels,
+      datasets:[{label:'Jugadores',data:edadLabels.map(b=>edades[b]||0),
+        backgroundColor:COLORS.slice(0,edadLabels.length),borderRadius:6,borderSkipped:false}]
+    },
+    options:{...CHART_DEFAULTS,
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#9a9aa3',font:{family:'Oswald',size:12}}},
+        y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#9a9aa3',font:{family:'Inter',size:11}},min:0}
+      },
+      plugins:{...CHART_DEFAULTS.plugins,legend:{display:false}}}
+  });
+}
+
+/* ── SEDE BARS ── */
+function renderSedeBars(){
+  const sedes = DATA.dashboard.porSede;
+  const max = Math.max(...sedes.map(s=>s.total),1);
+  $('barsSede').innerHTML = sedes.map(s => {
+    const w = Math.max((s.total/max)*100,2);
+    return '<div class="stat-bar-row">'+
+      '<div class="stat-bar-label" title="'+esc(s.sede)+'">'+esc(s.sede)+'</div>'+
+      '<div class="stat-bar-track">'+
+        '<div class="stat-bar-fill" style="width:'+w+'%;background:linear-gradient(90deg,var(--pink),var(--pink-soft))"></div>'+
+        '<div class="stat-bar-val">'+s.total+' ('+s.pct+')</div>'+
+      '</div></div>';
+  }).join('');
+}
+
+/* ── JUGADORES TABLE ── */
+let jugPage = 0;
+const JUG_PER_PAGE = 50;
+let jugFiltered = [];
+
+function renderJugadores(){
+  const jugs = DATA.jugadores || [];
+  // populate filters
+  const sedes = [...new Set(jugs.map(j=>j.sede).filter(s=>s&&s!=='N/A'))].sort();
+  const cats = [...new Set(jugs.map(j=>j.categoria||j.cat).filter(Boolean))].sort();
+  $('jugSede').innerHTML = '<option value="">Todas las sedes</option>' +
+    sedes.map(s=>'<option value="'+esc(s)+'">'+esc(s)+'</option>').join('');
+  $('jugCat').innerHTML = '<option value="">Todas las categorías</option>' +
+    cats.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
+
+  $('jugHead').innerHTML = '<tr>'+
+    '<th data-col="nombre">Jugador <span class="sort-arrow">▼</span></th>'+
+    '<th data-col="estadoGen">Estado <span class="sort-arrow">▼</span></th>'+
+    '<th data-col="estadoMes">Mes <span class="sort-arrow">▼</span></th>'+
+    '<th data-col="sede">Sede <span class="sort-arrow">▼</span></th>'+
+    '<th data-col="categoria">Cat <span class="sort-arrow">▼</span></th>'+
+    '<th data-col="nivel">Nivel <span class="sort-arrow">▼</span></th>'+
+    '<th data-col="edad">Edad <span class="sort-arrow">▼</span></th>'+
+    '<th data-col="pago">Pago <span class="sort-arrow">▼</span></th>'+
+    '<th data-col="minutaje">Min <span class="sort-arrow">▼</span></th>'+
+    '</tr>';
+
+  const applyFilters = () => {
+    const q = $('jugSearch').value.toLowerCase();
+    const est = $('jugEstado').value;
+    const sed = $('jugSede').value;
+    const cat = $('jugCat').value;
+    jugFiltered = jugs.filter(j => {
+      if(q && !j.nombre.toLowerCase().includes(q) && !j.rut.toLowerCase().includes(q)) return false;
+      if(est && j.estadoGen !== est) return false;
+      if(sed && j.sede !== sed) return false;
+      if(cat && j.categoria !== cat && j.cat !== cat) return false;
+      return true;
+    });
+    jugPage = 0;
+    renderJugPage();
+  };
+
+  $('jugSearch').oninput = applyFilters;
+  $('jugEstado').onchange = applyFilters;
+  $('jugSede').onchange = applyFilters;
+  $('jugCat').onchange = applyFilters;
+
+  // sorting
+  let sortCol = 'nombre', sortAsc = true;
+  $('jugHead').querySelectorAll('th').forEach(th => {
+    th.onclick = () => {
+      const col = th.dataset.col;
+      if(sortCol === col) sortAsc = !sortAsc;
+      else { sortCol = col; sortAsc = true; }
+      $('jugHead').querySelectorAll('th').forEach(h => h.classList.remove('sorted'));
+      th.classList.add('sorted');
+      th.querySelector('.sort-arrow').textContent = sortAsc ? '▲' : '▼';
+      jugFiltered.sort((a,b) => {
+        let va = a[col], vb = b[col];
+        if(typeof va === 'number') return sortAsc ? va-vb : vb-va;
+        return sortAsc ? String(va||'').localeCompare(String(vb||'')) : String(vb||'').localeCompare(String(va||''));
+      });
+      renderJugPage();
+    };
+  });
+
+  jugFiltered = [...jugs];
+  renderJugPage();
+}
+
+function renderJugPage(){
+  const start = jugPage * JUG_PER_PAGE;
+  const page = jugFiltered.slice(start, start + JUG_PER_PAGE);
+  $('jugCount').textContent = jugFiltered.length + ' jugadores';
+  $('jugBody').innerHTML = page.map(j =>
+    '<tr>'+
+    '<td><strong>'+esc(j.nombre)+'</strong><br><span style="font-size:11px;color:var(--muted)">'+esc(j.rut)+'</span></td>'+
+    '<td>'+badge(j.estadoGen)+'</td>'+
+    '<td>'+badgeMes(j.estadoMes)+'</td>'+
+    '<td>'+esc(j.sede)+'</td>'+
+    '<td>'+esc(j.categoria||j.cat)+'</td>'+
+    '<td>'+esc(j.nivel)+'</td>'+
+    '<td>'+j.edad+'</td>'+
+    '<td>'+badgePago(j.pago)+'</td>'+
+    '<td>'+fmtN(j.minutaje)+'</td>'+
+    '</tr>'
+  ).join('');
+
+  const totalPages = Math.ceil(jugFiltered.length / JUG_PER_PAGE);
+  $('jugPag').innerHTML =
+    '<button id="jugPrev" '+(jugPage===0?'disabled':'')+'>← Anterior</button>'+
+    '<span>Página '+(jugPage+1)+' de '+Math.max(totalPages,1)+'</span>'+
+    '<button id="jugNext" '+(jugPage>=totalPages-1?'disabled':'')+'>Siguiente →</button>';
+  $('jugPrev').onclick = () => { if(jugPage>0){jugPage--;renderJugPage();} };
+  $('jugNext').onclick = () => { if(jugPage<totalPages-1){jugPage++;renderJugPage();} };
+}
+
+/* ── PARTIDOS ── */
+function renderPartidos(){
+  const parts = DATA.partidos || [];
+
+  // Top lists
+  renderTopList('topMinutos', parts, 'minutos', j => fmtN(j.minutos)+"'");
+  renderTopList('topGoles', parts, 'goles', j => j.goles+' goles');
+  renderTopList('topNota', parts, 'nota', j => j.nota.toFixed(1));
+  renderTopList('topConv', parts, 'convocatorias', j => j.convocatorias+' conv.');
+
+  $('parHead').innerHTML = '<tr>'+
+    '<th>Jugador</th><th>Conv</th><th>Tit</th><th>Ing</th><th>Sup</th>'+
+    '<th>Min</th><th>Goles</th><th>TA</th><th>TR</th><th>Nota</th></tr>';
+
+  const renderParTable = () => {
+    const q = $('parSearch').value.toLowerCase();
+    const filtered = q ? parts.filter(p=>p.jugador.toLowerCase().includes(q)) : parts;
+    $('parCount').textContent = filtered.length + ' jugadores';
+    $('parBody').innerHTML = filtered.map(p =>
+      '<tr><td><strong>'+esc(p.jugador)+'</strong></td>'+
+      '<td>'+p.convocatorias+'</td><td>'+p.titularidades+'</td>'+
+      '<td>'+p.ingresos+'</td><td>'+p.suplencias+'</td>'+
+      '<td>'+fmtN(p.minutos)+'</td><td>'+p.goles+'</td>'+
+      '<td>'+p.tarjetasAmarillas+'</td><td>'+p.tarjetasRojas+'</td>'+
+      '<td><strong>'+p.nota.toFixed(1)+'</strong></td></tr>'
+    ).join('');
+  };
+  $('parSearch').oninput = renderParTable;
+  renderParTable();
+}
+
+function renderTopList(elId, data, field, fmt){
+  const sorted = [...data].sort((a,b) => b[field]-a[field]).slice(0,10);
+  $(elId).innerHTML = sorted.map((j,i) =>
+    '<li class="top-item">'+
+    '<div class="top-rank">'+(i+1)+'</div>'+
+    '<div class="top-name">'+esc(j.jugador)+'</div>'+
+    '<div class="top-val">'+fmt(j)+'</div>'+
+    '</li>'
+  ).join('');
+}
+
+/* ── EVALUACIONES ── */
+function renderEvaluaciones(){
+  const evals = DATA.evaluaciones || [];
+
+  // Populate cat filter
+  const cats = [...new Set(evals.map(e=>e.categoria).filter(Boolean))].sort();
+  $('evalCat').innerHTML = '<option value="">Todas las categorías</option>' +
+    cats.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
+
+  // Promedio por categoría chart
+  const catAvg = {};
+  evals.forEach(e => {
+    if(!e.categoria || !e.promedio) return;
+    if(!catAvg[e.categoria]) catAvg[e.categoria] = {sum:0,n:0};
+    catAvg[e.categoria].sum += e.promedio;
+    catAvg[e.categoria].n++;
+  });
+  const catLabels = Object.keys(catAvg).sort();
+  new Chart($('chartEvalCat'),{
+    type:'bar',
+    data:{
+      labels:catLabels,
+      datasets:[{label:'Promedio',
+        data:catLabels.map(c=> +(catAvg[c].sum/catAvg[c].n).toFixed(1)),
+        backgroundColor:COLORS.slice(0,catLabels.length),borderRadius:6,borderSkipped:false}]
+    },
+    options:{...CHART_DEFAULTS,
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#9a9aa3',font:{family:'Oswald',size:12}}},
+        y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#9a9aa3'},min:0,max:7}
+      },
+      plugins:{...CHART_DEFAULTS.plugins,legend:{display:false}}}
+  });
+
+  // Distribución de notas
+  const bins = {'1-2':0,'2-3':0,'3-4':0,'4-5':0,'5-6':0,'6-7':0};
+  evals.forEach(e => {
+    if(!e.promedio) return;
+    const p = e.promedio;
+    if(p<2) bins['1-2']++;
+    else if(p<3) bins['2-3']++;
+    else if(p<4) bins['3-4']++;
+    else if(p<5) bins['4-5']++;
+    else if(p<6) bins['5-6']++;
+    else bins['6-7']++;
+  });
+  new Chart($('chartEvalDist'),{
+    type:'bar',
+    data:{
+      labels:Object.keys(bins),
+      datasets:[{label:'Jugadores',data:Object.values(bins),
+        backgroundColor:['#ff5050','#e67e22','#ffb020','#6495ed','#27c281','#ff2e93'],
+        borderRadius:6,borderSkipped:false}]
+    },
+    options:{...CHART_DEFAULTS,
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#9a9aa3',font:{family:'Oswald',size:12}}},
+        y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#9a9aa3'},min:0}
+      },
+      plugins:{...CHART_DEFAULTS.plugins,legend:{display:false}}}
+  });
+
+  // Table
+  $('evalHead').innerHTML = '<tr>'+
+    '<th>Jugador</th><th>Cat</th><th>Sede</th><th>Nivel</th>'+
+    '<th>Téc-Tác</th><th>Física</th><th>Actitud</th><th>Promedio</th></tr>';
+
+  const renderEvalTable = () => {
+    const q = $('evalSearch').value.toLowerCase();
+    const cat = $('evalCat').value;
+    const filtered = evals.filter(e => {
+      if(q && !e.jugador.toLowerCase().includes(q)) return false;
+      if(cat && e.categoria !== cat) return false;
+      return true;
+    });
+    $('evalCount').textContent = filtered.length + ' jugadores';
+    $('evalBody').innerHTML = filtered.map(e =>
+      '<tr><td><strong>'+esc(e.jugador)+'</strong></td>'+
+      '<td>'+esc(e.categoria)+'</td><td>'+esc(e.sede)+'</td><td>'+esc(e.nivel)+'</td>'+
+      '<td>'+fmtNota(e.notaTecTac)+'</td><td>'+fmtNota(e.notaFisica)+'</td>'+
+      '<td>'+fmtNota(e.notaActitudinal)+'</td><td><strong>'+fmtNota(e.promedio)+'</strong></td></tr>'
+    ).join('');
+  };
+  $('evalSearch').oninput = renderEvalTable;
+  $('evalCat').onchange = renderEvalTable;
+  renderEvalTable();
+}
+
+/* ── COBRANZAS ── */
+function renderCobranzas(){
+  const cobs = DATA.cobranzas || [];
+
+  // KPIs
+  const alDia = cobs.filter(c => c.pagoMensualidad === 'AL DIA').length;
+  const morosos = cobs.filter(c => c.morosidadMeses > 0).length;
+  $('cobKpis').innerHTML =
+    '<div class="kpi"><div class="kpi-label">Total registros</div><div class="kpi-val">'+cobs.length+'</div></div>'+
+    '<div class="kpi"><div class="kpi-label">Al día</div><div class="kpi-val ok">'+alDia+'</div>'+
+    '<div class="kpi-sub">'+pct(alDia,cobs.length)+'</div></div>'+
+    '<div class="kpi"><div class="kpi-label">Morosos</div><div class="kpi-val warn">'+morosos+'</div>'+
+    '<div class="kpi-sub">'+pct(morosos,cobs.length)+'</div></div>';
+
+  $('cobHead').innerHTML = '<tr>'+
+    '<th>Jugador</th><th>Categoría</th><th>Estado</th>'+
+    '<th>Pago</th><th>Morosidad</th><th>Monto</th></tr>';
+
+  const renderCobTable = () => {
+    const q = $('cobSearch').value.toLowerCase();
+    const pago = $('cobPago').value;
+    const filtered = cobs.filter(c => {
+      if(q && !c.jugador.toLowerCase().includes(q)) return false;
+      if(pago === 'AL DIA' && c.pagoMensualidad !== 'AL DIA') return false;
+      if(pago === 'MOROSO' && c.morosidadMeses <= 0) return false;
+      return true;
+    });
+    $('cobCount').textContent = filtered.length + ' registros';
+    $('cobBody').innerHTML = filtered.map(c =>
+      '<tr><td><strong>'+esc(c.jugador)+'</strong></td>'+
+      '<td>'+esc(c.categoria)+'</td>'+
+      '<td>'+badge(c.estadoGen)+'</td>'+
+      '<td>'+badgePago(c.pagoMensualidad)+'</td>'+
+      '<td>'+(c.morosidadMeses>0? c.morosidadMeses+' mes(es)' : '—')+'</td>'+
+      '<td>'+(c.montoTotal||'$0')+'</td></tr>'
+    ).join('');
+  };
+  $('cobSearch').oninput = renderCobTable;
+  $('cobPago').onchange = renderCobTable;
+  renderCobTable();
+}
+
+/* ══ HELPERS ══ */
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtN(n){ return n != null ? Number(n).toLocaleString('es-CL') : '—'; }
+function fmtNota(n){ return n ? Number(n).toFixed(1) : '—'; }
+function pct(a,b){ return b ? (a/b*100).toFixed(1)+'%' : '—'; }
+
+function badge(estado){
+  const e = String(estado||'').toUpperCase();
+  const cls = e==='ACTIVO'?'badge-activo':e==='NEW'?'badge-new':e==='FULL'?'badge-full':
+    e==='DESACTIVADO'?'badge-desactivado':e==='LESIONADO'?'badge-lesionado':'badge-desactivado';
+  return '<span class="badge '+cls+'">'+esc(estado||'—')+'</span>';
+}
+function badgeMes(mes){
+  const m = String(mes||'').toUpperCase();
+  const cls = m==='SEGURO'?'badge-seguro':m==='INSEGURO'?'badge-inseguro':'badge-out';
+  return '<span class="badge '+cls+'">'+esc(mes||'—')+'</span>';
+}
+function badgePago(pago){
+  const p = String(pago||'').toUpperCase();
+  if(p==='AL DIA'||p==='AL DÍA') return '<span class="badge badge-aldia">AL DÍA</span>';
+  if(p.includes('MOROS')) return '<span class="badge badge-moroso">MOROSO</span>';
+  return '<span class="badge badge-out">'+esc(pago||'—')+'</span>';
+}
+</script>
+</body>
+</html>
