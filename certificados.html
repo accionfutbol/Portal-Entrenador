@@ -98,7 +98,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.5}
     </div>
     <div class="row2">
       <div class="field"><label>Sede</label>
-        <select id="f-sede"><option value="">—</option><option>LAS CONDES</option><option>PEÑALOLÉN</option><option>LA FLORIDA</option></select>
+        <select id="f-sede"><option value="">—</option><option>LAS CONDES</option><option>PEÑALOLÉN</option><option>LA FLORIDA</option><option>MAIPÚ</option></select>
       </div>
       <div class="field"><label>Categoría</label><input type="text" id="f-cat"></div>
     </div>
@@ -171,6 +171,9 @@ const SCHEDULES = {
     'SUB14': ['Lunes, Miércoles y Viernes de 18:30 a 20:00 horas.'],
     'SUB16': ['Martes, Jueves y Viernes de 18:30 a 20:00 horas.'],
     'SUB18': ['Lunes, Miércoles y Viernes de 18:30 a 20:00 horas.']
+  },
+  'MAIPÚ': {
+    '*': ['Lunes de 18:00 a 19:30 horas.', 'Miércoles de 17:30 a 19:00 horas.', 'Viernes de 18:30 a 20:00 horas.']
   }
 };
 function getLugar(sede, cat){
@@ -182,6 +185,7 @@ function getLugar(sede, cat){
       ? 'Estadio Cordillera, Los Talladores 5724, Peñalolén.'
       : 'Complejo Honorino Landa, Península 1963, Peñalolén.';
   }
+  if(s.indexOf('MAIP')>=0) return 'Tierra Fértil 1680, Maipú.';
   return '';
 }
 
@@ -261,6 +265,7 @@ function matchSede(s){
   if(s.indexOf('PEÑ')>=0 || s.indexOf('PEN')>=0) return 'PEÑALOLÉN';
   if(s.indexOf('FLORIDA')>=0) return 'LA FLORIDA';
   if(s.indexOf('CONDES')>=0) return 'LAS CONDES';
+  if(s.indexOf('MAIP')>=0) return 'MAIPÚ';
   return '';
 }
 function normCat(c){
