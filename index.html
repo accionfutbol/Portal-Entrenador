@@ -977,7 +977,7 @@ $('btn-datafutbol').onclick = ()=>{ location.href='/datafutbol.html'; };
 /* ── utils ── */
 const SKIP = new Set(['#N/A','#VALUE!','#DIV/0!','#REF!','#NAME?','NAN','SIN DATA','S/D','S/I','-','N/A','']);
 const norm  = s => (s||'').toString().replace(/[.\- ]/g,'').toUpperCase();
-const noAcc = s => (s||'').toString().normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const noAcc = s => (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function clean(v){ if(v==null) return ''; const t=String(v).trim(); return SKIP.has(t.toUpperCase())?'':t; }
 function num(v){ const t=clean(v); if(!t) return ''; const f=parseFloat(t.replace(',','.')); if(isNaN(f)) return t; return f===Math.round(f)?String(Math.round(f)):String(Math.round(f*100)/100); }
 function fdate(v){
@@ -1549,7 +1549,7 @@ $('pdf').onclick=async ()=>{
   doc.text('Acción Fútbol · Portal del Apoderado · Temporada 2026',M,288);
   doc.text(p.rut,W-M,288,{align:'right'});
 
-  const safe=p.nombre.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'_');
+  const safe=p.nombre.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_');
   doc.save(`Ficha_${safe}.pdf`);
   } finally {
     btn.textContent = originalText; btn.disabled = false;
